@@ -1,0 +1,277 @@
+"""Regression tests for BH-001..BH-008.
+
+Expected results come from EXPECTED_BEHAVIOUR.md.
+"""
+
+import math
+
+import pytest
+
+from app import main
+from transaction_service import TransactionService
+from utils import apply_discount, is_valid_transaction, validate_transaction
+
+
+def tx(transaction_id, amount, currency="USD", description=""):
+    return {"id": transaction_id, "amount": amount, "currency": currency, "description": description}
+
+
+def loaded(*records):
+    svc = TransactionService()
+    svc.load(list(records))
+    return svc
+
+
+@pytest.fixture
+def service():
+    return loaded(tx("A", 100.0), tx("B", 50.0), tx("A", 100.0), tx("C", -30.0))
+
+
+# --- BH-001 find_duplicates -------------------------------------------------
+
+
+def test_find_duplicates_spec_example_returns_third_and_fifth():
+    svc = loaded(tx("A", 1.0), tx("B", 2.0), tx("A", 3.0), tx("C", 4.0), tx("A", 5.0))
+    assert svc.find_duplicates() == [tx("A", 3.0), tx("A", 5.0)]
+
+
+def test_find_duplicates_returns_later_record_not_original():
+    svc = loaded(tx("A", 10.0), tx("A", 20.0))
+    assert svc.find_duplicates() == [tx("A", 20.0)]
+
+
+def test_find_duplicates_with_no_duplicates_is_empty():
+    assert loaded(tx("A", 10.0), tx("B", 20.0)).find_duplicates() == []
+
+
+def test_find_duplicates_keeps_invalid_records_in_store():
+    svc = loaded(tx("A", 10.0), tx("", 5.0), tx("A", 10.0))
+    before = svc.all_transactions()
+    assert svc.find_duplicates() == [tx("A", 10.0)]
+    assert svc.count() == 3
+    assert svc.all_transactions() == before
+
+
+def test_find_duplicates_ignores_invalid_original():
+    assert loaded(tx("A", 0), tx("A", 10.0)).find_duplicates() == []
+
+
+def test_find_duplicates_ignores_invalid_repeat():
+    assert loaded(tx("A", 10.0), tx("A", 10.0, currency="US")).find_duplicates() == []
+
+
+# --- BH-002 total_valid_transactions ----------------------------------------
+
+
+def test_total_spec_example():
+    assert loaded(tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)).total_valid_transactions() == 120.0
+
+
+def test_total_of_only_refunds_is_negative():
+    assert loaded(tx("A", -10.0), tx("B", -5.0)).total_valid_transactions() == -15.0
+
+
+def test_total_ignores_invalid_refund():
+    assert loaded(tx("A", 100.0), tx("", -30.0)).total_valid_transactions() == 100.0
+
+
+def test_total_rounds_with_round_money():
+    assert loaded(tx("A", 0.1), tx("B", 0.2)).total_valid_transactions() == 0.3
+
+
+def test_total_empty_store_is_zero():
+    assert TransactionService().total_valid_transactions() == 0.0
+
+
+# --- BH-003 get_transaction -------------------------------------------------
+
+
+def test_get_transaction_index_equal_to_count_returns_none(service):
+    assert service.get_transaction(4) is None
+    assert service.get_transaction(3) == tx("C", -30.0)
+
+
+@pytest.mark.parametrize("index", ["1", 1.5, None])
+def test_get_transaction_non_integer_returns_none(service, index):
+    assert service.get_transaction(index) is None
+
+
+@pytest.mark.parametrize("index", [-4, -5, 10**400])
+def test_get_transaction_other_negative_and_huge_indexes(service, index):
+    assert service.get_transaction(index) is None
+
+
+def test_get_transaction_on_empty_store():
+    assert TransactionService().get_transaction(0) is None
+
+
+def test_get_transaction_indexes_all_records_not_only_valid():
+    assert loaded(tx("", 5.0), tx("A", 10.0)).get_transaction(0) == tx("", 5.0)
+
+
+# --- BH-004 average_transaction_value ---------------------------------------
+
+
+def test_average_with_only_invalid_records_is_zero():
+    assert loaded(tx("", 10.0), tx("A", 0)).average_transaction_value() == 0.0
+
+
+def test_average_counts_refunds_as_negative_and_rounds():
+    assert loaded(tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)).average_transaction_value() == 40.0
+    assert loaded(tx("A", 10), tx("B", 20), tx("C", 25)).average_transaction_value() == 18.33
+
+
+# --- BH-005 apply_discount --------------------------------------------------
+
+
+def test_apply_discount_boundaries():
+    assert apply_discount(80, 0) == 80.0
+    assert apply_discount(200, 100) == 0.0
+
+
+@pytest.mark.parametrize("percent", [100.01, -0.01])
+def test_apply_discount_rejects_just_outside_range(percent):
+    with pytest.raises(ValueError):
+        apply_discount(200, percent)
+
+
+def test_apply_discount_does_not_validate_amount():
+    assert apply_discount(-50, 10) == -45.0
+
+
+# --- BH-006 currency --------------------------------------------------------
+
+
+@pytest.mark.parametrize("currency", ["usd", "Usd", "US1", "ÄBC", "ＵＳＤ", "U D"])
+def test_validate_rejects_non_uppercase_ascii_currency(currency):
+    assert not is_valid_transaction(tx("A", 10.0, currency=currency))
+
+
+@pytest.mark.parametrize("currency", ["USD\n", None, 123, b"USD", ["U", "S", "D"]])
+def test_validate_rejects_other_bad_currency_types(currency):
+    assert not is_valid_transaction(tx("A", 10.0, currency=currency))
+
+
+@pytest.mark.parametrize("currency", ["EUR", "GBP"])
+def test_validate_accepts_uppercase_currencies(currency):
+    assert validate_transaction(tx("A", 10.0, currency=currency)) == []
+
+
+def test_validate_one_problem_per_broken_rule():
+    assert len(validate_transaction(tx(" ", True, currency="usd"))) == 3
+    assert len(validate_transaction(tx("A", 10.0, currency="us"))) == 1
+
+
+# --- BH-007 / BH-008 huge amounts -------------------------------------------
+
+
+@pytest.mark.parametrize("amount", [10**400, -(10**400)])
+def test_validate_huge_int_amount_never_raises(amount):
+    record = tx("A", amount)
+    problems = validate_transaction(record)  # spec: never raises
+    assert is_valid_transaction(record) == (problems == [])
+
+
+@pytest.mark.parametrize("records", [[tx("A", 10**400)], [tx("A", 10**400), tx("B", 1.0)]])
+def test_average_with_huge_int_amount_never_raises(records):
+    loaded(*records).average_transaction_value()  # spec: never raises; value unspecified
+
+
+def test_average_with_huge_valid_int_amounts_followed_by_float_never_raises():
+    # Each amount is a valid finite int; the int sum exceeds float range before the float is added.
+    loaded(tx("A", 10**308), tx("B", 10**308), tx("C", 1.0)).average_transaction_value()
+
+
+def test_validate_accepts_large_float_representable_int():
+    assert validate_transaction(tx("A", 10**308)) == []
+
+
+# --- coverage: validation rules ---------------------------------------------
+
+
+@pytest.mark.parametrize("value", [None, [], "A"])
+def test_validate_non_dict_returns_one_problem(value):
+    assert len(validate_transaction(value)) == 1
+
+
+def test_validate_missing_fields_stop_further_checks():
+    assert validate_transaction({"id": "", "amount": 0}) == ["missing field: currency"]
+    assert sorted(validate_transaction({})) == [
+        "missing field: amount", "missing field: currency", "missing field: id"]
+
+
+@pytest.mark.parametrize("amount", [math.nan, math.inf, -math.inf, True])
+def test_validate_rejects_bad_amounts(amount):
+    assert not is_valid_transaction(tx("A", amount))
+
+
+@pytest.mark.parametrize("transaction_id", ["   ", 123])
+def test_validate_rejects_bad_ids(transaction_id):
+    assert not is_valid_transaction(tx(transaction_id, 10.0))
+
+
+def test_validate_description_is_optional():
+    assert validate_transaction({"id": "A", "amount": 10.0, "currency": "USD"}) == []
+
+
+# --- coverage: storage ------------------------------------------------------
+
+
+def test_add_transaction_stores_a_copy():
+    svc = TransactionService()
+    record = tx("A", 10.0)
+    svc.add_transaction(record)
+    record["amount"] = 999.0
+    assert svc.all_transactions()[0]["amount"] == 10.0
+
+
+def test_add_transaction_rejects_non_dict():
+    svc = TransactionService()
+    with pytest.raises(ValueError):
+        svc.add_transaction(None)
+    assert svc.count() == 0
+
+
+def test_all_transactions_returns_new_list(service):
+    service.all_transactions().append(tx("Z", 1.0))
+    assert service.count() == 4
+
+
+# --- CLI (app.py table) -----------------------------------------------------
+
+
+def _values(out):
+    return [line.split(":", 1)[1].strip() for line in out.strip().splitlines()]
+
+
+def test_cli_summary(capsys):
+    main(["summary"])
+    assert _values(capsys.readouterr().out) == ["6", "5", "501.25", "100.25", "1"]
+
+
+def test_cli_empty_summary(capsys):
+    main(["--empty", "summary"])
+    assert _values(capsys.readouterr().out) == ["0", "0", "0.00", "0.00", "0"]
+
+
+def test_cli_duplicates_prints_one_txn_1002_line(capsys):
+    main(["duplicates"])
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 1
+    assert "TXN-1002" in lines[0]
+
+
+def test_cli_show_2(capsys):
+    main(["show", "2"])
+    assert "TXN-1003" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("index", ["99", "-1"])
+def test_cli_show_missing_position(capsys, index):
+    main(["show", index])
+    assert capsys.readouterr().out.strip() == f"No transaction at position {index}."
+
+
+def test_cli_discount(capsys):
+    main(["discount", "200", "15"])
+    assert capsys.readouterr().out.strip() == "170.00"

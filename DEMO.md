@@ -41,7 +41,9 @@ repository, where the demo app is still broken.
    `acceptEdits` lets Claude Code edit files without a prompt for each edit; it
    still asks before running commands. The first time it asks to run the
    tests, choose **Yes, and don't ask again for: python3 -m pytest**. A full
-   run takes several minutes, so rehearse once to learn the timing.
+   run took 11 minutes 14 seconds in rehearsal. To fit the slot, type
+   `/bug-hunter` straight after Stage 1, then present Stages 2 and 5 while
+   it works.
 
 ## Stage 1: The problem (1 minute)
 
@@ -90,7 +92,7 @@ Open `demo-app/EXPECTED_BEHAVIOUR.md` in VS Code and say:
 
 Do not open `transaction_service.py` yet. Let the agent find the lines.
 
-## Stage 3: Run Bug Hunter (5 to 6 minutes)
+## Stage 3: Run Bug Hunter (about 11 minutes)
 
 In terminal 2, type:
 

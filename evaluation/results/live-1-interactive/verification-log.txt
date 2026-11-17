@@ -1,0 +1,223 @@
+===== BH-001 verification (09:53:48)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py::test_find_duplicates_returns_the_repeated_record tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged tests/test_bug_hunter_regressions.py::test_find_duplicates_spec_example_returns_third_and_fifth tests/test_bug_hunter_regressions.py::test_find_duplicates_returns_later_record_not_original tests/test_bug_hunter_regressions.py::test_find_duplicates_with_no_duplicates_is_empty tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_invalid_records_in_store tests/test_bug_hunter_regressions.py::test_find_duplicates_ignores_invalid_original tests/test_bug_hunter_regressions.py::test_find_duplicates_ignores_invalid_repeat tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_one_txn_1002_line
+9 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+6 failed, 12 passed in 0.02s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent
+FAILED tests/test_app.py::test_get_transaction_out_of_range_returns_none
+FAILED tests/test_app.py::test_get_transaction_negative_index_returns_none
+FAILED tests/test_app.py::test_total_subtracts_refunds
+FAILED tests/test_bug_hunter_regressions.py::test_total_spec_example
+FAILED tests/test_bug_hunter_regressions.py::test_total_of_only_refunds_is_negative
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[1]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[1.5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[None]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[-4]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[-5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\xc4BC]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\uff35\uff33\uff24]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_summary
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_missing_position[99]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_missing_position[-1]
+34 failed, 49 passed in 0.13s
+===== BH-002 verification (09:53:59)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py::test_total_subtracts_refunds tests/test_bug_hunter_regressions.py::test_total_spec_example tests/test_bug_hunter_regressions.py::test_total_of_only_refunds_is_negative tests/test_bug_hunter_regressions.py::test_total_ignores_invalid_refund
+4 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+5 failed, 13 passed in 0.02s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent
+FAILED tests/test_app.py::test_get_transaction_out_of_range_returns_none
+FAILED tests/test_app.py::test_get_transaction_negative_index_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[1]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[1.5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none[None]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[-4]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[-5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes[100000000000
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\xc4BC]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\uff35\uff33\u
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[1000000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-100000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_missing_position[99]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_missing_position[-1]
+30 failed, 53 passed in 0.12s
+===== BH-003 verification (09:54:07)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py::test_get_transaction_out_of_range_returns_none tests/test_app.py::test_get_transaction_negative_index_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_other_negative_and_huge_indexes tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store tests/test_bug_hunter_regressions.py::test_get_transaction_indexes_all_records_not_only_valid tests/test_bug_hunter_regressions.py::test_cli_show_missing_position
+13 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+3 failed, 15 passed in 0.02s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\xc4BC]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\uff35\uff33\u
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[1000000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-100000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary
+18 failed, 65 passed in 0.10s
+===== BH-004 verification (09:54:14)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py::test_average_of_empty_store_is_zero tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero tests/test_bug_hunter_regressions.py::test_cli_empty_summary
+3 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+2 failed, 16 passed in 0.02s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\xc4BC]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\uff35\uff33\u
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[1000000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-100000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+15 failed, 68 passed in 0.08s
+===== BH-005 verification (09:54:23)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py::test_apply_discount_rejects_percent_above_100 tests/test_app.py::test_apply_discount_rejects_negative_percent tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_just_outside_range tests/test_bug_hunter_regressions.py::test_apply_discount_boundaries tests/test_bug_hunter_regressions.py::test_apply_discount_does_not_validate_amount
+6 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+18 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\xc4BC]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[\uff35\uff33\u
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[1000000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-100000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+11 failed, 72 passed in 0.08s
+===== BH-006 verification (09:54:30)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_bug_hunter_regressions.py::test_validate_rejects_non_uppercase_ascii_currency tests/test_bug_hunter_regressions.py::test_validate_one_problem_per_broken_rule tests/test_bug_hunter_regressions.py::test_validate_rejects_other_bad_currency_types tests/test_bug_hunter_regressions.py::test_validate_accepts_uppercase_currencies
+14 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+18 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[1000000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises[-100000000000000000000
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records0]
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises[records1]
+4 failed, 79 passed in 0.06s
+===== BH-007 verification (09:54:42)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_bug_hunter_regressions.py::test_validate_huge_int_amount_never_raises
+2 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+18 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+83 passed in 0.03s
+===== BH-008 verification (09:54:43)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises
+2 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py
+18 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+83 passed in 0.03s
+$ python3 app.py summary
+Records stored:      6
+Valid transactions:  5
+Net total:           501.25
+Average value:       100.25
+Duplicate records:   1
+$ python3 app.py duplicates
+TXN-1002        45.50 USD  Printer paper
+$ python3 app.py show 2
+usage: app.py [-h] [--empty] {summary,duplicates,validate,show,discount} ...
+app.py: error: argument command: invalid choice: 'show 2', maybe you meant 'show'? (choose from 'summary', 'duplicates', 'validate', 'show', 'discount')
+$ python3 app.py show 99
+usage: app.py [-h] [--empty] {summary,duplicates,validate,show,discount} ...
+app.py: error: argument command: invalid choice: 'show 99', maybe you meant 'show'? (choose from 'summary', 'duplicates', 'validate', 'show', 'discount')
+$ python3 app.py discount 200 15
+usage: app.py [-h] [--empty] {summary,duplicates,validate,show,discount} ...
+app.py: error: argument command: invalid choice: 'discount 200 15', maybe you meant 'discount'? (choose from 'summary', 'duplicates', 'validate', 'show', 'discount')
+$ python3 app.py --empty summary
+usage: app.py [-h] [--empty] {summary,duplicates,validate,show,discount} ...
+app.py: error: argument command: invalid choice: '--empty summary', maybe you meant 'summary'? (choose from 'summary', 'duplicates', 'validate', 'show', 'discount')
+NOTE: the 4 argparse 'invalid choice' errors above were caused by the orchestrator's zsh loop not word-splitting arguments, not by the app. Correct re-run follows.
+$ python3 app.py summary
+Records stored:      6
+Valid transactions:  5
+Net total:           501.25
+Average value:       100.25
+Duplicate records:   1
+(exit 0)
+$ python3 app.py duplicates
+TXN-1002        45.50 USD  Printer paper
+(exit 0)
+$ python3 app.py show 2
+TXN-1003       -20.00 USD  Refund: damaged paper
+(exit 0)
+$ python3 app.py show 99
+No transaction at position 99.
+(exit 0)
+$ python3 app.py discount 200 15
+170.00
+(exit 0)
+$ python3 app.py --empty summary
+Records stored:      0
+Valid transactions:  0
+Net total:           0.00
+Average value:       0.00
+Duplicate records:   0
+(exit 0)
+===== BH-008 re-opened after test-engineer review: attempt 1 left OverflowError for 10**308,10**308,1.0 (Verification failed). Attempt 2 follows.
+===== BH-008 attempt 2 verification (09:57:13)
+$ python3 -m pytest -p no:cacheprovider -q tests/test_bug_hunter_regressions.py::test_average_with_huge_int_amount_never_raises tests/test_bug_hunter_regressions.py::test_average_with_huge_valid_int_amounts_followed_by_float_never_raises
+3 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q tests/test_app.py tests/test_bug_hunter_regressions.py::test_average_counts_refunds_as_negative_and_rounds tests/test_bug_hunter_regressions.py::test_validate_accepts_large_float_representable_int
+20 passed in 0.01s
+$ python3 -m pytest -p no:cacheprovider -q (full suite)
+85 passed in 0.03s

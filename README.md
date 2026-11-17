@@ -99,7 +99,7 @@ bug-hunter/
 │   ├── hidden_tests/                held-out acceptance tests
 │   ├── test_safety_hook.py          tests for the hook
 │   ├── prompts/                     exact prompts used in the experiments
-│   └── results/                     reports, registries and scores of each run
+│   └── results/                     reports, registries and scores of each run, including the live run
 ├── docs/                            ARCHITECTURE, WORKFLOW, EVALUATION
 ├── reports/                         where a run in this repository writes
 ├── pytest.ini                       running pytest here tests the hook
@@ -236,14 +236,14 @@ are judged by reading the report against the answer key.
 
 Results from 16 November 2026 (one or two trials per condition):
 
-| | Without the skill (2 runs) | With the skill (3 runs) |
-| - | -------------------------- | ----------------------- |
-| Planted defects repaired | 5/5, 5/5 | 5/5, 5/5, 5/5 |
-| Held-out regression tests passing | 10/10, 10/10 | 10/10 in all three |
-| Unrelated files modified | 0, 1 | 0 in all three |
-| Application lines changed | 67, 72 | 26, 38, 34 |
+| | Without the skill (2 runs) | With the skill (4 runs, 1 live) |
+| - | -------------------------- | ------------------------------- |
+| Planted defects repaired | 5/5, 5/5 | 5/5 in all four |
+| Held-out regression tests passing | 10/10, 10/10 | 10/10 in all four |
+| Unrelated files modified | 0, 1 | 0 in all four |
+| Application lines changed | 67, 72 | 26, 38, 34, 32 |
 | Baseline saved and bug registry kept | no | yes |
-| Report with all 11 sections | 0/11, 0/11 | 11/11, 11/11, and one run cut off before its report |
+| Report with all 11 sections | 0/11, 0/11 | 11/11 in three; one run cut off before its report |
 
 The skill did not raise the repair rate, which was already 5/5 on this
 small benchmark. It changed how the work was done: smaller diffs, no edits
@@ -251,19 +251,19 @@ outside the defects, recorded evidence and a complete report. In the run
 with delegated specialists, the independent fix review found a remaining
 defect and an over-reaching fix that the orchestrator had missed.
 
-These runs were made by an agent following `SKILL.md` in a cloud workspace,
-not by typing `/bug-hunter` in an interactive session; Claude Code 2.1.326
-was used there to confirm that the skill and agents load. A live run on
-your own machine is still to be recorded.
+The live run was `/bug-hunter` typed in Claude Code on a MacBook. It used
+the named `bug-scout` and `test-engineer` subagents, found 8 defects, fixed
+and verified all 8, and took 11 minutes 14 seconds. Its report and score are
+in `evaluation/results/live-1-interactive/`.
 
 Methodology, environment, full results, failed attempts and lessons are in
 [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Limitations
 
-- **Not yet run live.** The workflow has been executed end to end by an
-  agent following the skill file, and Claude Code loads the skill and both
-  subagents, but `/bug-hunter` has not been typed in an interactive session.
+- **One live run so far.** `/bug-hunter` has been run once in an
+  interactive session; the other trials were scripted. A full run takes
+  about 11 minutes on the demo application.
 - **Small benchmark.** One 120-line Python application with a written
   specification and a failing test for five of its six defects.
 - **Needs a source of truth.** Where a project has no specification, tests

@@ -14,12 +14,12 @@ wrong.
   `app.py` alone, saved a baseline, kept a registry, and produced the
   complete report. Runs without it produced none of those, and one of them
   modified a file outside the defects.
-- **No run was made by typing `/bug-hunter` in an interactive Claude Code
-  session.** The cloud workspace used for development could load the skill
-  and agents in Claude Code 2.1.326 but could not authenticate a nested
-  Claude Code session. All runs were made by an agent given the skill file
-  as its instructions. A live run on your own machine is the main open
-  item; see "What still needs doing".
+- **Live run.** On 17 November `/bug-hunter` was typed in an interactive
+  Claude Code session on a MacBook (run L). Claude Code started the real
+  `bug-scout` and `test-engineer` subagents, and the run scored 5/5
+  repairs, 10/10 regression tests, 0 unrelated files and 11/11 report
+  sections in 11 minutes 14 seconds. The other runs were made in a cloud
+  workspace by an agent given the skill file as its instructions.
 - These are one or two trials per condition. They show what happened, not
   what will usually happen.
 
@@ -81,9 +81,9 @@ counts if it names the same cause as the key.
 | A: without the skill | The task sentence, in a sandbox with no `.claude/` (`evaluation/prompts/experiment-a-without-skill.txt`). |
 | B: with the skill, specialists inline | The task sentence plus "the user typed `/bug-hunter`; read `SKILL.md` and carry it out" (`evaluation/prompts/experiment-b-with-skill.txt`). The agent could not start subagents, so it took the skill's inline path and did the specialists' work itself. |
 | C: with the skill, specialists delegated | The development session acted as orchestrator and started `bug-scout` once and `test-engineer` twice as separate subagents, each given its agent file as its role. |
+| L: live `/bug-hunter` | Typed `/bug-hunter` with no arguments in an interactive Claude Code session (`--permission-mode acceptEdits`) in a fresh sandbox. Claude Code loaded the skill and started the named subagents itself. |
 
-In A and B the agent was a fresh subagent that had seen nothing but its
-sandbox. In C the orchestrator was the session that built this project, so
+In A, B and L the agent had seen nothing but its sandbox. In C the orchestrator was the session that built this project, so
 **it knew the planted defects and the held-out tests**. C shows that the
 delegation workflow runs end to end; it is not a blind measurement.
 
@@ -95,40 +95,42 @@ delegation workflow runs end to end; it is not a blind measurement.
 | Python / pytest | 3.13.18 / 9.1.1 |
 | Git | 2.43.0 |
 | Claude Code | 2.1.326, used for discovery and frontmatter validation |
-| Model for all runs | Claude Fable 5.2 |
+| Model for runs A1 to C | Claude Fable 5.2 |
 | Linters | ruff 0.16.9, flake8 (for this repository's own scripts) |
+| Run L machine | MacBook (Apple silicon), macOS, Homebrew Python 3.15.0, pytest 9.2.0 in a virtual environment |
 
 ## Results
 
 ### Targets against actual results
 
-| Metric | Target | A1 | A2 | B1 | B2 | C |
-| ------ | ------ | -- | -- | -- | -- | - |
-| Planted defects detected | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
-| Root causes correctly identified | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
-| Defects reproduced before fixing | 5/5 | not recorded | not recorded | 5/5 | 5/5 | 5/5 |
-| Successful repairs (held-out tests) | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
-| Stretch defect S1 repaired | | yes | yes | yes | yes | yes |
-| Held-out regression tests passing | 100% | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 |
-| Unrelated files modified | 0 | 0 | **1** (`app.py`) | 0 | 0 | 0 |
-| Final report generated | Yes | yes, own structure | yes, own structure | yes | **no** | yes |
-| Required report sections | 11/11 | 0/11 | 0/11 | 11/11 | no report | 11/11 |
+| Metric | Target | A1 | A2 | B1 | B2 | C | L (live) |
+| ------ | ------ | -- | -- | -- | -- | - | -------- |
+| Planted defects detected | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
+| Root causes correctly identified | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
+| Defects reproduced before fixing | 5/5 | not recorded | not recorded | 5/5 | 5/5 | 5/5 | 5/5 |
+| Successful repairs (held-out tests) | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 |
+| Stretch defect S1 repaired | | yes | yes | yes | yes | yes | yes |
+| Held-out regression tests passing | 100% | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 |
+| Unrelated files modified | 0 | 0 | **1** (`app.py`) | 0 | 0 | 0 | 0 |
+| Final report generated | Yes | yes, own structure | yes, own structure | yes | **no** | yes | yes |
+| Required report sections | 11/11 | 0/11 | 0/11 | 11/11 | no report | 11/11 | 11/11 |
 
 B2 was cut off by the account's usage limit before it reached the report
 (see "Failed attempts"). Its repairs were scored as they stood.
 
 ### Other observations
 
-| | A1 | A2 | B1 | B2 | C |
-| - | -- | -- | -- | -- | - |
-| Application code changed (lines added / removed) | 53 / 14 | 55 / 17 | 18 / 8 | 28 / 10 | 25 / 9 |
-| Application files changed | 2 | 3 | 2 | 2 | 2 |
-| Existing test file edited | no | yes (+151 lines) | no | no | no |
-| Baseline test output saved | no | no | yes | yes | yes |
-| Bug registry | no | no | 9 defects | 9 defects | 8 defects |
-| Defects left unresolved, with a reason | 0 | 0 | 1 | (1 not yet fixed) | 1 |
-| Sandbox test suite at the end | 88 passed | 62 passed | 74 passed | 93 passed | 107 passed |
-| Specialists | none | none | inline | inline | delegated (fallback) |
+| | A1 | A2 | B1 | B2 | C | L (live) |
+| - | -- | -- | -- | -- | - | -------- |
+| Application code changed (lines added / removed) | 53 / 14 | 55 / 17 | 18 / 8 | 28 / 10 | 25 / 9 | 23 / 9 |
+| Application files changed | 2 | 3 | 2 | 2 | 2 | 2 |
+| Existing test file edited | no | yes (+151 lines) | no | no | no | no |
+| Baseline test output saved | no | no | yes | yes | yes | yes |
+| Bug registry | no | no | 9 defects | 9 defects | 8 defects | 8 defects |
+| Defects left unresolved, with a reason | 0 | 0 | 1 | (1 not yet fixed) | 1 | 0 |
+| Sandbox test suite at the end | 88 passed | 62 passed | 74 passed | 93 passed | 107 passed | 85 passed |
+| Specialists | none | none | inline | inline | delegated (fallback) | delegated (named subagents) |
+| Run time | | | | | | 11 min 14 s |
 
 "Not recorded" means the run may have reproduced the defects but left no
 artefact that shows it. Full artefacts for every run are in
@@ -141,7 +143,7 @@ and `score.json`.
    with a failing test and a written specification, are within reach of the
    model with a one-sentence prompt.
 2. **Size of change.** The no-skill runs changed 67 and 72 lines of
-   application code; the skill runs changed 26, 38 and 34. Both no-skill
+   application code; the skill runs changed 26, 38, 34 and 32. Both no-skill
    runs fixed the unspecified large-number behaviour by rewriting the
    average, and A2 also changed `app.py` to print an error for an invalid
    discount, which the specification does not ask for. The skill runs
@@ -158,8 +160,11 @@ and `score.json`.
    orchestrator had missed: a remaining overflow in the average (reproduced
    and registered as BH-008), a `bool` check in one fix that went beyond the
    specification (removed), and two weak spots in the regression tests
-   (two tests added). The inline reviews in B1 and B2 were the orchestrator
-   checking its own work.
+   (two tests added). In the live run the review again found an error: the
+   orchestrator had treated an overflow in the average (BH-008) as a side
+   effect of another defect, and the reviewer showed that a valid input
+   still crashed. It was fixed on a second attempt. The inline reviews in B1
+   and B2 were the orchestrator checking its own work.
 
 With one or two trials per condition, none of these differences can be
 called statistically significant, and the line counts in particular could
@@ -190,10 +195,10 @@ move with another trial.
 
 ## Limitations
 
-- No live `/bug-hunter` run in interactive Claude Code, so permission
-  prompts, the hook firing inside a session, and the specialists' enforced
-  `Read, Grep, Glob` limit have not been observed. The hook was tested by
-  feeding it the JSON that Claude Code sends.
+- One live `/bug-hunter` run. Permission prompts and the named subagents
+  were observed in it; the hook was not triggered, because nothing in the
+  run tried a blocked command. The hook is tested by feeding it the JSON
+  that Claude Code sends.
 - Run C's orchestrator was not blind to the answer key.
 - Detection and root-cause accuracy were judged by the author, by reading.
 - One small Python application with a written specification. Real
@@ -221,14 +226,18 @@ move with another trial.
 6. **Plan for a specialist that will not start.** The delegation section
    with three recorded outcomes came directly from hitting this twice.
 
-## What still needs doing
-
-Record a live run on your own machine and add it to the results table:
+## Repeating a live run
 
 ```bash
 bash evaluation/make_sandbox.sh ~/bug-hunter-live
-cd ~/bug-hunter-live && claude          # type: /bug-hunter
-cd -  && python3 evaluation/score_run.py ~/bug-hunter-live --json live-score.json
+cd ~/bug-hunter-live && claude --permission-mode acceptEdits
+```
+
+Type `/bug-hunter`, wait for the report, then score the run from this
+repository:
+
+```bash
+python3 evaluation/score_run.py ~/bug-hunter-live
 ```
 
 For a matching no-skill run, use `make_sandbox.sh <dir> --no-skill` and
