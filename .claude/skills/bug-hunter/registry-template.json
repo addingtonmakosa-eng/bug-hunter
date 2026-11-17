@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "target": "<directory under investigation, relative to the repository root>",
+  "focus": "<focus notes from the user, or empty>",
+  "repository": {
+    "languages": [],
+    "frameworks": [],
+    "test_command": "",
+    "expected_behaviour_sources": [],
+    "is_git_repository": true
+  },
+  "preexisting_uncommitted_files": [],
+  "delegation": {
+    "bug-scout": "delegated | performed inline: <reason>",
+    "test-engineer": "delegated | performed inline: <reason>"
+  },
+  "baseline": { "command": "", "passed": 0, "failed": 0, "errors": 0, "output_file": "reports/baseline-test-output.txt" },
+  "final": { "command": "", "passed": 0, "failed": 0, "errors": 0, "output_file": "reports/final-test-output.txt" },
+  "bugs": [
+    {
+      "id": "BH-001",
+      "title": "",
+      "file": "",
+      "location": "<function or line range>",
+      "severity": "Critical | High | Medium | Low",
+      "confidence": "high | medium | low",
+      "source": "bug-scout | test-engineer | orchestrator | failing-test",
+      "expected": "",
+      "expected_behaviour_source": "<spec section, test, docstring or caller that defines the expected behaviour>",
+      "actual": "",
+      "evidence": "",
+      "reproduction": { "test": "", "command": "", "result_before_fix": "", "reproduced": null },
+      "root_cause": "",
+      "fix": { "summary": "", "files": [], "attempts": 0 },
+      "verification": { "targeted": "", "full_suite": "", "verified": null },
+      "status": "Discovered",
+      "history": ["Discovered"],
+      "notes": ""
+    }
+  ],
+  "observations": [
+    { "summary": "<speculative or non-defect item>", "file": "", "reason_not_a_defect": "" }
+  ]
+}
