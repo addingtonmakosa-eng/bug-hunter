@@ -100,6 +100,7 @@ bug-hunter/
 │   └── results/                     reports, registries and scores of each run
 ├── docs/                            ARCHITECTURE, WORKFLOW, EVALUATION
 ├── reports/                         where a run in this repository writes
+├── pytest.ini                       running pytest here tests the hook
 ├── DEMO.md                          live demonstration script
 └── DEVLOG.md                        development log
 ```
