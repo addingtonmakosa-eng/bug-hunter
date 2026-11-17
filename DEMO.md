@@ -38,7 +38,7 @@ repository, where the demo app is still broken.
    cd ~/bug-hunter-demo && claude --permission-mode acceptEdits
    ```
 
-   `acceptEdits` lets Claude edit files without a prompt for each edit; it
+   `acceptEdits` lets Claude Code edit files without a prompt for each edit; it
    still asks before running commands. The first time it asks to run the
    tests, choose **Yes, and don't ask again for: python3 -m pytest**. A full
    run takes several minutes, so rehearse once to learn the timing.

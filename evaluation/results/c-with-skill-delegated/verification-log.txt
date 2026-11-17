@@ -17,7 +17,7 @@ $ python3 -m pytest -q -k "average or cli_empty_summary"
 .....F...                                                                [100%]
 =================================== FAILURES ===================================
 E   OverflowError: int too large to convert to float
-/home/claude/eval/run-c/demo-app/utils.py:33: OverflowError: int too large to convert to float
+<sandbox>/demo-app/utils.py:33: OverflowError: int too large to convert to float
 =========================== short test summary info ============================
 FAILED tests/test_bug_hunter_regressions.py::test_average_does_not_raise_for_int_too_large_for_float
 1 failed, 8 passed, 96 deselected in 0.08s

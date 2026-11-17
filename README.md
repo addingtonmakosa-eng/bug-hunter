@@ -1,7 +1,9 @@
 # Bug Hunter
 
+By Addington Makosa, with help from Claude (Anthropic)
+
 An autonomous debugging and repair skill for Claude Code. Type `/bug-hunter`
-in a repository and Claude inspects the code, sends two specialist subagents
+in a repository and Claude Code inspects the code, sends two specialist subagents
 to investigate, reproduces each suspected defect, fixes the confirmed ones,
 verifies the fixes with the test suite, and writes a report.
 
@@ -152,7 +154,7 @@ Start `claude` in the repository you want examined, then:
 | `/bug-hunter demo-app` | Restrict the hunt, and all edits, to one directory. |
 | `/bug-hunter src/billing rounding errors only` | A directory plus focus notes. |
 
-Claude asks for permission before editing files and running commands, as it
+Claude Code asks for permission before editing files and running commands, as it
 always does. Bug Hunter leaves its changes uncommitted so that you can
 review the diff. It writes:
 
