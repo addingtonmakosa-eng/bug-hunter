@@ -17,8 +17,8 @@ pytest 9.1.1, Git 2.43.0, Claude Code 2.1.326). Times are US Eastern.
 | 21:47 | 6 Refinement | One delegation section in the skill covering named, fallback and inline specialists. | Validated; committed |
 | 21:48 to 21:57 | 5 Runs A2, B2 | Repeat trials with the prompts recorded in `evaluation/prompts/`. B2 stopped by the account usage limit before its report. | A2 scored 5/5 with 1 unrelated file; B2 scored 5/5 as it stood |
 | 21:50 to 22:10 | 5 Run C finished | Test Engineer design run, 87 then 89 new test cases, seven fixes verified one by one, Test Engineer fix review, report. | Final suite 107 passed; held-out 5/5, 10/10; 0 unrelated files; report 11/11 |
-| 22:05 | 6 Refinement | Skill: select verification tests by id, stop on an unexplained failure, save the reproduction output, verification log and diff, hand the reviewer file paths, record unspecified choices. Evaluation scripts tidied for the linter. | Validated; hook tests 50 passed; scorer re-run on all sandboxes |
-| 22:15 | 7 Documentation | `README.md`, `DEMO.md`, `docs/EVALUATION.md`, updates to `docs/WORKFLOW.md`, this log. Run artefacts copied to `evaluation/results/`. | Numbers checked against `score.json` files; all checks re-run from a clean clone |
+| 22:00 | 6 Refinement | Skill: select verification tests by id, stop on an unexplained failure, save the reproduction output, verification log and diff, hand the reviewer file paths, record unspecified choices. Evaluation scripts tidied for the linter. | Validated; hook tests 50 passed; scorer re-run on all sandboxes |
+| 22:10 | 7 Documentation | `README.md`, `DEMO.md`, `docs/EVALUATION.md`, updates to `docs/WORKFLOW.md`, this log. Run artefacts copied to `evaluation/results/`. | Numbers checked against `score.json` files; all checks re-run from a clean clone |
 
 ## Definition of done
 
