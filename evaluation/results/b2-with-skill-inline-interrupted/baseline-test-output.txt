@@ -1,0 +1,127 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/claude/eval/run-b2/demo-app
+configfile: pytest.ini
+testpaths: tests
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collected 18 items
+
+tests/test_app.py .......FFF.FF.FF.F                                     [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_average_of_empty_store_is_zero ______________________
+
+    def test_average_of_empty_store_is_zero():
+>       assert TransactionService().average_transaction_value() == 0.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_app.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f1adbfe4410>
+
+    def average_transaction_value(self):
+        """Average amount of the valid transactions."""
+        valid = self.valid_transactions()
+        total = sum(tx["amount"] for tx in valid)
+>       return round_money(total / len(valid))
+                           ^^^^^^^^^^^^^^^^^^
+E       ZeroDivisionError: division by zero
+
+transaction_service.py:44: ZeroDivisionError
+_______________ test_find_duplicates_returns_the_repeated_record _______________
+
+service = <transaction_service.TransactionService object at 0x7f1adc0eed70>
+
+    def test_find_duplicates_returns_the_repeated_record(service):
+>       assert service.find_duplicates() == [tx("A", 100.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         Left contains 2 more items, first extra item: {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_app.py:76: AssertionError
+_______________ test_find_duplicates_leaves_the_store_unchanged ________________
+
+service = <transaction_service.TransactionService object at 0x7f1adc0ef5c0>
+
+    def test_find_duplicates_leaves_the_store_unchanged(service):
+        before = service.all_transactions()
+        service.find_duplicates()
+>       assert service.all_transactions() == before
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         At index 2 diff: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}
+E         Right contains one more item: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_app.py:82: AssertionError
+________________ test_apply_discount_rejects_percent_above_100 _________________
+
+    def test_apply_discount_rejects_percent_above_100():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_app.py:93: Failed
+_________________ test_apply_discount_rejects_negative_percent _________________
+
+    def test_apply_discount_rejects_negative_percent():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_app.py:98: Failed
+________________ test_get_transaction_out_of_range_returns_none ________________
+
+service = <transaction_service.TransactionService object at 0x7f1adbfd69c0>
+
+    def test_get_transaction_out_of_range_returns_none(service):
+>       assert service.get_transaction(10) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_app.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f1adbfd69c0>
+index = 10
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+_______________ test_get_transaction_negative_index_returns_none _______________
+
+service = <transaction_service.TransactionService object at 0x7f1adbfd6580>
+
+    def test_get_transaction_negative_index_returns_none(service):
+>       assert service.get_transaction(-1) is None
+E       AssertionError: assert {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} is None
+E        +  where {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} = get_transaction(-1)
+E        +    where get_transaction = <transaction_service.TransactionService object at 0x7f1adbfd6580>.get_transaction
+
+tests/test_app.py:114: AssertionError
+_________________________ test_total_subtracts_refunds _________________________
+
+service = <transaction_service.TransactionService object at 0x7f1adbff5550>
+
+    def test_total_subtracts_refunds(service):
+>       assert service.total_valid_transactions() == 220.0
+E       assert 280.0 == 220.0
+E        +  where 280.0 = total_valid_transactions()
+E        +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7f1adbff5550>.total_valid_transactions
+
+tests/test_app.py:127: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero - ZeroDivisionE...
+FAILED tests/test_app.py::test_find_duplicates_returns_the_repeated_record - ...
+FAILED tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged - A...
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100 - Fai...
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent - Fail...
+FAILED tests/test_app.py::test_get_transaction_out_of_range_returns_none - In...
+FAILED tests/test_app.py::test_get_transaction_negative_index_returns_none - ...
+FAILED tests/test_app.py::test_total_subtracts_refunds - assert 280.0 == 220.0
+========================= 8 failed, 10 passed in 0.05s =========================

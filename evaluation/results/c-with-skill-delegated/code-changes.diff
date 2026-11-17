@@ -1,0 +1,88 @@
+diff --git a/demo-app/transaction_service.py b/demo-app/transaction_service.py
+index 4dfda9b..7a4a691 100644
+--- a/demo-app/transaction_service.py
++++ b/demo-app/transaction_service.py
+@@ -40,27 +40,33 @@ class TransactionService:
+     def average_transaction_value(self):
+         """Average amount of the valid transactions."""
+         valid = self.valid_transactions()
++        if not valid:
++            return 0.0
+         total = sum(tx["amount"] for tx in valid)
+         return round_money(total / len(valid))
+ 
+     def find_duplicates(self):
+         """Find transactions that repeat the id of an earlier transaction."""
+         seen = set()
+-        unique = []
++        duplicates = []
+         for tx in self.valid_transactions():
+-            if tx["id"] not in seen:
++            if tx["id"] in seen:
++                duplicates.append(tx)
++            else:
+                 seen.add(tx["id"])
+-                unique.append(tx)
+-        self._transactions = unique
+-        return unique
++        return duplicates
+ 
+     def get_transaction(self, index):
+-        """Return the record stored at the given position."""
++        """Return the record stored at the given position, or None if there is none."""
++        if not isinstance(index, int):
++            return None
++        if index < 0 or index >= len(self._transactions):
++            return None
+         return self._transactions[index]
+ 
+     def total_valid_transactions(self):
+         """Net total of the valid transactions."""
+         total = 0.0
+         for tx in self.valid_transactions():
+-            total += abs(tx["amount"])
++            total += tx["amount"]
+         return round_money(total)
+diff --git a/demo-app/utils.py b/demo-app/utils.py
+index 9db9980..f75b30a 100644
+--- a/demo-app/utils.py
++++ b/demo-app/utils.py
+@@ -10,6 +10,14 @@ def round_money(value):
+     return round(float(value), 2)
+ 
+ 
++def _is_finite(number):
++    """True when the number can be represented as a finite float."""
++    try:
++        return math.isfinite(number)
++    except OverflowError:  # an int beyond the range of a float
++        return False
++
++
+ def validate_transaction(transaction):
+     """Check a transaction record.
+ 
+@@ -30,13 +38,13 @@ def validate_transaction(transaction):
+     amount = transaction["amount"]
+     if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+         problems.append("amount must be a number")
+-    elif math.isnan(amount) or math.isinf(amount):
++    elif not _is_finite(amount):
+         problems.append("amount must be finite")
+     elif amount == 0:
+         problems.append("amount must not be zero")
+ 
+     currency = transaction["currency"]
+-    if not isinstance(currency, str) or len(currency) != 3:
++    if not isinstance(currency, str) or len(currency) != 3 or not all("A" <= ch <= "Z" for ch in currency):
+         problems.append("currency must be a three-letter code")
+ 
+     return problems
+@@ -49,5 +57,7 @@ def is_valid_transaction(transaction):
+ 
+ def apply_discount(amount, percent):
+     """Return the amount after taking a percentage discount off it."""
++    if not 0 <= percent <= 100:
++        raise ValueError("percent must be between 0 and 100")
+     discounted = amount * (1 - percent / 100)
+     return round_money(discounted)

@@ -1,0 +1,527 @@
+{
+  "schema_version": 1,
+  "target": ".",
+  "focus": "",
+  "repository": {
+    "languages": [
+      "Python 3 (README requires 3.9 or later; this run used 3.13.18)"
+    ],
+    "frameworks": [
+      "pytest (tests only; application uses the standard library)"
+    ],
+    "test_command": "cd demo-app && python3 -m pytest",
+    "expected_behaviour_sources": [
+      "demo-app/EXPECTED_BEHAVIOUR.md (the specification; states it wins over the code)",
+      "demo-app/README.md (purpose, layout, usage, test command)",
+      "demo-app/tests/test_app.py (18 existing tests, results taken from the specification)",
+      "docstrings in demo-app/utils.py, demo-app/transaction_service.py, demo-app/app.py"
+    ],
+    "is_git_repository": true,
+    "purpose": "Transaction Manager: a small command-line application that keeps financial transactions in memory, validates them, and reports averages, net totals, duplicates, discounts and records by position.",
+    "structure": {
+      "application": [
+        "demo-app/app.py (CLI entry point)",
+        "demo-app/transaction_service.py (TransactionService)",
+        "demo-app/utils.py (validation, rounding, discount helpers)"
+      ],
+      "tests": [
+        "demo-app/tests/test_app.py"
+      ],
+      "config": [
+        "demo-app/pytest.ini (testpaths = tests, pythonpath = .)",
+        "demo-app/requirements.txt (pytest>=7.0)"
+      ],
+      "tooling": [
+        ".claude/ (skill, agents, safety hook, settings; not application code)"
+      ]
+    },
+    "git_head": "15c112b Baseline: broken demo app",
+    "linter": "none configured in the project (no pyproject.toml, setup.cfg, .flake8 or ruff.toml)"
+  },
+  "preexisting_uncommitted_files": [],
+  "delegation": {
+    "bug-scout": "performed inline: this session has no Agent/Task tool, so no subagent (named or general) could be started; the orchestrator followed .claude/agents/bug-scout.md itself by reading every source file against the specification",
+    "test-engineer": "performed inline: this session has no Agent/Task tool, so no subagent (named or general) could be started; the orchestrator followed .claude/agents/test-engineer.md itself for test design (Phase 3) and fix review (Phase 6). The review is therefore not independent."
+  },
+  "baseline": {
+    "command": "cd demo-app && python3 -m pytest -p no:cacheprovider",
+    "passed": 10,
+    "failed": 8,
+    "errors": 0,
+    "output_file": "reports/baseline-test-output.txt",
+    "note": "Existing suite only (tests/test_app.py, 18 tests), before any change. -p no:cacheprovider only stops pytest writing a .pytest_cache directory."
+  },
+  "final": {
+    "command": "",
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "output_file": "reports/final-test-output.txt"
+  },
+  "bugs": [
+    {
+      "id": "BH-001",
+      "title": "find_duplicates overwrites the store, deleting duplicate and invalid records",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.find_duplicates, line 54",
+      "severity": "Critical",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "The stored records are not changed in any way; count() and all_transactions() return the same results before and after the call.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section find_duplicates(), third bullet; tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged",
+      "actual": "Both failed. count() was 2 instead of 5 after the call (assert 2 == 5); all_transactions() differed from the snapshot taken before the call.",
+      "evidence": "Line 54 `self._transactions = unique` replaces the store. For ids A, B, A, C the store shrinks from 4 records to 3; invalid records are dropped as well.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged",
+          "tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_count_and_invalid_records"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_count_and_invalid_records",
+        "result_before_fix": "Both failed. count() was 2 instead of 5 after the call (assert 2 == 5); all_transactions() differed from the snapshot taken before the call.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: line 54 assigns the de-duplicated list of valid records back to self._transactions, so a read-only query replaces the store. Symptoms: count(), all_transactions(), get_transaction() and every calculation change after the first call; the CLI summary is only unaffected because it calls find_duplicates last.",
+      "fix": {
+        "summary": "Removed the line `self._transactions = unique` from find_duplicates so the method no longer writes to the store.",
+        "files": [
+          "demo-app/transaction_service.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "2 passed: tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged, tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_count_and_invalid_records",
+        "full_suite": "After this fix: 51 failed, 40 passed (was 53 failed, 38 passed); no previously passing test failed. Related run (-k duplicates): 6 failed, 3 passed, the 6 being BH-002 tests not yet fixed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run). The called-twice test was first filed here; it fails because of the wrong return value, so it was moved to BH-002 before any fix was made."
+    },
+    {
+      "id": "BH-002",
+      "title": "find_duplicates returns the first occurrences instead of the duplicates",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.find_duplicates, lines 48-55",
+      "severity": "High",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "Returns every valid record whose id already appeared in an earlier valid record; the first record with an id is not returned. Ids A, B, A, C, A return the third and fifth records; no duplicates returns [].",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section find_duplicates(), first and second bullets and the example; tests/test_app.py::test_find_duplicates_returns_the_repeated_record",
+      "actual": "All 6 failed. Ids A, B, A, C, A returned the first A, B and C records instead of the third and fifth; a store with no duplicates returned every record instead of []; the CLI printed 4 lines instead of 1 (assert 4 == 1). Two consecutive calls did not both return the one duplicate.",
+      "evidence": "Lines 51-53 append a record to `unique` when its id has NOT been seen, and line 55 returns `unique`. For ids A, B, A, C it returns the A, B and C originals rather than the second A.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_find_duplicates_returns_the_repeated_record",
+          "tests/test_bug_hunter_regressions.py::test_find_duplicates_spec_example_returns_third_and_fifth_records",
+          "tests/test_bug_hunter_regressions.py::test_find_duplicates_can_be_called_twice_with_the_same_result",
+          "tests/test_bug_hunter_regressions.py::test_find_duplicates_without_duplicates_is_empty",
+          "tests/test_bug_hunter_regressions.py::test_find_duplicates_only_compares_valid_records",
+          "tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_the_second_txn_1002_record"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_find_duplicates_returns_the_repeated_record tests/test_bug_hunter_regressions.py::test_find_duplicates_spec_example_returns_third_and_fifth_records tests/test_bug_hunter_regressions.py::test_find_duplicates_without_duplicates_is_empty tests/test_bug_hunter_regressions.py::test_find_duplicates_only_compares_valid_records tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_the_second_txn_1002_record tests/test_bug_hunter_regressions.py::test_find_duplicates_can_be_called_twice_with_the_same_result",
+        "result_before_fix": "All 6 failed. Ids A, B, A, C, A returned the first A, B and C records instead of the third and fifth; a store with no duplicates returned every record instead of []; the CLI printed 4 lines instead of 1 (assert 4 == 1). Two consecutive calls did not both return the one duplicate.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: the loop condition is inverted for the purpose. It collects a record when its id has not been seen (the originals) and discards the later ones, then returns that list. Symptom: the CLI `duplicates` command lists 4 originals and `summary` reports 4 duplicates. Shares the function with BH-001 but is a separate wrong decision (what is returned versus what is stored).",
+      "fix": {
+        "summary": "find_duplicates now appends a record when its id is already in `seen` and otherwise records the id; the local list was renamed from `unique` to `duplicates` because it now holds the duplicates.",
+        "files": [
+          "demo-app/transaction_service.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "6 passed: the 6 reproduction tests listed under reproduction.test",
+        "full_suite": "After this fix: 45 failed, 46 passed (was 51 failed, 40 passed); no previously passing test failed. Related run (-k duplicates): 9 passed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run)."
+    },
+    {
+      "id": "BH-003",
+      "title": "total_valid_transactions adds refunds instead of subtracting them",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.total_valid_transactions, line 65",
+      "severity": "High",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "The sum of the signed amounts of the valid transactions; a refund lowers the total. Amounts 100.0, -30.0, 50.0 total 120.0.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section total_valid_transactions(); tests/test_app.py::test_total_subtracts_refunds",
+      "actual": "All 3 failed: 280.0 instead of 220.0; 180.0 instead of 120.0 for the specification example; 12.5 instead of -12.5 for two refunds.",
+      "evidence": "Line 65 `total += abs(tx[\"amount\"])`. For 100.0, 50.0, 100.0, -30.0 it gives 280.0, not 220.0.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_total_subtracts_refunds",
+          "tests/test_bug_hunter_regressions.py::test_total_spec_example",
+          "tests/test_bug_hunter_regressions.py::test_total_of_refunds_only_is_negative"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_total_subtracts_refunds tests/test_bug_hunter_regressions.py::test_total_spec_example tests/test_bug_hunter_regressions.py::test_total_of_refunds_only_is_negative",
+        "result_before_fix": "All 3 failed: 280.0 instead of 220.0; 180.0 instead of 120.0 for the specification example; 12.5 instead of -12.5 for two refunds.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: line 65 accumulates abs(tx['amount']), which turns every refund into a purchase. Symptom: the CLI summary shows a net total of 541.25 instead of 501.25.",
+      "fix": {
+        "summary": "total_valid_transactions now adds the signed amount (`total += tx[\"amount\"]`) instead of its absolute value.",
+        "files": [
+          "demo-app/transaction_service.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "3 passed: the 3 reproduction tests listed under reproduction.test",
+        "full_suite": "After this fix: 41 failed, 50 passed (was 45 failed, 46 passed); no previously passing test failed. Related run (-k 'total or summary'): 6 passed, 1 failed; the failure is test_cli_empty_summary, which is the BH-004 ZeroDivisionError and was not yet fixed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run)."
+    },
+    {
+      "id": "BH-004",
+      "title": "average_transaction_value raises ZeroDivisionError when there are no valid transactions",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.average_transaction_value, line 44",
+      "severity": "High",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "With no valid transactions (including an empty store) it returns 0.0; never raises for a store that holds only dictionaries.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section average_transaction_value(); tests/test_app.py::test_average_of_empty_store_is_zero",
+      "actual": "All 3 failed with ZeroDivisionError: division by zero at transaction_service.py:44.",
+      "evidence": "Line 44 `round_money(total / len(valid))` divides by len(valid) with no guard; len(valid) is 0 for an empty store or a store of only invalid records.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_average_of_empty_store_is_zero",
+          "tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero",
+          "tests/test_bug_hunter_regressions.py::test_cli_empty_summary"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_average_of_empty_store_is_zero tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero tests/test_bug_hunter_regressions.py::test_cli_empty_summary",
+        "result_before_fix": "All 3 failed with ZeroDivisionError: division by zero at transaction_service.py:44.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: line 44 divides by len(valid) with no guard for an empty list of valid transactions. Symptom: `python3 app.py --empty summary` ends in a traceback.",
+      "fix": {
+        "summary": "average_transaction_value returns 0.0 before dividing when valid_transactions() is empty.",
+        "files": [
+          "demo-app/transaction_service.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "3 passed: the 3 reproduction tests listed under reproduction.test",
+        "full_suite": "After this fix: 38 failed, 53 passed (was 41 failed, 50 passed); no previously passing test failed. Related run (-k 'average or summary'): 6 passed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run)."
+    },
+    {
+      "id": "BH-005",
+      "title": "get_transaction raises or returns the wrong record for an invalid index",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.get_transaction, line 59",
+      "severity": "Medium",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "If index is not an integer, is negative, or is >= count(), returns None. Never raises.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section get_transaction(index); tests/test_app.py::test_get_transaction_out_of_range_returns_none and ::test_get_transaction_negative_index_returns_none",
+      "actual": "All failed (2 existing tests and 12 new test cases). IndexError for index 10, 99, count() and for 0 on an empty store; -1 and -2 returned records counted from the end; '1', 1.0, 1.5, None, [1] and (0,) raised TypeError.",
+      "evidence": "Line 59 `return self._transactions[index]` is a bare list subscript: [10] on 4 records raises IndexError, [-1] returns the last record, ['1'] and [1.0] raise TypeError.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_get_transaction_out_of_range_returns_none",
+          "tests/test_app.py::test_get_transaction_negative_index_returns_none",
+          "tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none",
+          "tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none",
+          "tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store_returns_none",
+          "tests/test_bug_hunter_regressions.py::test_get_transaction_every_negative_index_returns_none",
+          "tests/test_bug_hunter_regressions.py::test_cli_show_99_reports_no_transaction"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_get_transaction_out_of_range_returns_none tests/test_app.py::test_get_transaction_negative_index_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store_returns_none tests/test_bug_hunter_regressions.py::test_get_transaction_every_negative_index_returns_none tests/test_bug_hunter_regressions.py::test_cli_show_99_reports_no_transaction",
+        "result_before_fix": "All failed (2 existing tests and 12 new test cases). IndexError for index 10, 99, count() and for 0 on an empty store; -1 and -2 returned records counted from the end; '1', 1.0, 1.5, None, [1] and (0,) raised TypeError.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: line 59 passes the caller's index straight to a list subscript, which has Python's semantics (negative indexes count from the end, out-of-range raises IndexError, non-integers raise TypeError) rather than the specified ones. Symptom: `python3 app.py show 99` ends in a traceback.",
+      "fix": {
+        "summary": "get_transaction returns None unless index is an int with 0 <= index < len(self._transactions); only then does it subscript the list.",
+        "files": [
+          "demo-app/transaction_service.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "14 passed: the 2 existing tests and 12 new test cases listed under reproduction.test",
+        "full_suite": "After this fix: 24 failed, 67 passed (was 38 failed, 53 passed); no previously passing test failed. Related run (-k 'get_transaction or show or stores_a_copy'): 18 passed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run). A bool index is still accepted as 1 / 0 because bool is an int in Python and the specification does not exclude it; see observations."
+    },
+    {
+      "id": "BH-006",
+      "title": "apply_discount accepts a percent outside 0 to 100",
+      "file": "demo-app/utils.py",
+      "location": "apply_discount, lines 50-53",
+      "severity": "Medium",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "percent must be between 0 and 100 inclusive; a percent below 0 or above 100 raises ValueError.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section apply_discount(amount, percent); tests/test_app.py::test_apply_discount_rejects_percent_above_100 and ::test_apply_discount_rejects_negative_percent",
+      "actual": "All failed (2 existing tests and 8 new test cases) with 'DID NOT RAISE ValueError' for 150, -10, 100.01, 101, 1000, -0.01, -1, inf, -inf and nan.",
+      "evidence": "Lines 52-53 compute `amount * (1 - percent / 100)` with no range check: apply_discount(200, 150) gives -100.0, apply_discount(200, -10) gives 220.0.",
+      "reproduction": {
+        "test": [
+          "tests/test_app.py::test_apply_discount_rejects_percent_above_100",
+          "tests/test_app.py::test_apply_discount_rejects_negative_percent",
+          "tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range",
+          "tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_nan_percent"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_app.py::test_apply_discount_rejects_percent_above_100 tests/test_app.py::test_apply_discount_rejects_negative_percent tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_nan_percent",
+        "result_before_fix": "All failed (2 existing tests and 8 new test cases) with 'DID NOT RAISE ValueError' for 150, -10, 100.01, 101, 1000, -0.01, -1, inf, -inf and nan.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: apply_discount never checks percent; lines 52-53 apply the formula to any value.",
+      "fix": {
+        "summary": "apply_discount raises ValueError('percent must be between 0 and 100') unless 0 <= percent <= 100, before computing. The chained comparison also rejects NaN, which is not between 0 and 100.",
+        "files": [
+          "demo-app/utils.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "10 passed: the 2 existing tests and 8 new test cases listed under reproduction.test",
+        "full_suite": "After this fix: 14 failed, 77 passed (was 24 failed, 67 passed); no previously passing test failed. Related run (-k discount): 13 passed, including the boundary test (0 and 100 allowed) and the CLI `discount 200 15` row.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run)."
+    },
+    {
+      "id": "BH-007",
+      "title": "validate_transaction accepts currency codes that are not three uppercase ASCII letters",
+      "file": "demo-app/utils.py",
+      "location": "validate_transaction, lines 38-40",
+      "severity": "Medium",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "currency must be exactly three uppercase ASCII letters, for example USD; each broken rule adds one problem.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md Data model table, currency row; section validate_transaction, third bullet",
+      "actual": "All 11 new test cases failed. validate_transaction returned [] (assert 0 == 1) for 'usd', 'Usd', 'uSD', '123', 'U$D', 'US1', 'U D', three spaces and three non-ASCII capitals; a 'usd' record was counted in the total and accepted by add_transaction.",
+      "evidence": "Lines 39-40 check only `isinstance(currency, str)` and `len(currency) != 3`; no test covers case or character class.",
+      "reproduction": {
+        "test": [
+          "tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters",
+          "tests/test_bug_hunter_regressions.py::test_lowercase_currency_record_is_left_out_of_calculations",
+          "tests/test_bug_hunter_regressions.py::test_add_transaction_rejects_lowercase_currency"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters tests/test_bug_hunter_regressions.py::test_lowercase_currency_record_is_left_out_of_calculations tests/test_bug_hunter_regressions.py::test_add_transaction_rejects_lowercase_currency",
+        "result_before_fix": "All 11 new test cases failed. validate_transaction returned [] (assert 0 == 1) for 'usd', 'Usd', 'uSD', '123', 'U$D', 'US1', 'U D', three spaces and three non-ASCII capitals; a 'usd' record was counted in the total and accepted by add_transaction.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: lines 39-40 implement only the type and length parts of the currency rule; the 'uppercase ASCII letters' part was never written. Secondary effect: such records are treated as valid by add_transaction and by every calculation.",
+      "fix": {
+        "summary": "The currency check now also requires the three characters to be ASCII, alphabetic and uppercase (str.isascii, isalpha, isupper). The problem text changed from 'currency must be a three-letter code' to 'currency must be a three-letter uppercase code' so it still describes the rule; no test or document quotes the old text.",
+        "files": [
+          "demo-app/utils.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "11 passed: the 11 new test cases listed under reproduction.test",
+        "full_suite": "After this fix: 3 failed, 88 passed (was 14 failed, 77 passed); no previously passing test failed. Related run (-k 'validate or currency or add_transaction'): 37 passed, 2 failed; the 2 are the BH-008 validation tests, not yet fixed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run)."
+    },
+    {
+      "id": "BH-008",
+      "title": "validate_transaction raises OverflowError for an integer amount too large for a float",
+      "file": "demo-app/utils.py",
+      "location": "validate_transaction, line 33",
+      "severity": "Low",
+      "confidence": "medium",
+      "source": "orchestrator",
+      "expected": "validate_transaction never raises; average_transaction_value never raises for a store that holds only dictionaries.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section validate_transaction, last bullet (Never raises); section average_transaction_value(), second bullet",
+      "actual": "All 3 new test cases failed with OverflowError: int too large to convert to float at utils.py:33.",
+      "evidence": "Line 33 `math.isnan(amount)` converts an int to a C double; an int beyond the float range cannot be converted.",
+      "reproduction": {
+        "test": [
+          "tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_an_integer_too_large_for_a_float",
+          "tests/test_bug_hunter_regressions.py::test_calculations_do_not_raise_for_an_integer_too_large_for_a_float"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_an_integer_too_large_for_a_float tests/test_bug_hunter_regressions.py::test_calculations_do_not_raise_for_an_integer_too_large_for_a_float",
+        "result_before_fix": "All 3 new test cases failed with OverflowError: int too large to convert to float at utils.py:33.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: line 33 calls math.isnan on any int; converting an int beyond the float range to a C double raises OverflowError. Secondary failures: valid_transactions(), average_transaction_value(), total_valid_transactions(), find_duplicates() and add_transaction() all call validate_transaction, so they raise too.",
+      "fix": {
+        "summary": "validate_transaction now checks finiteness through a small private helper, _is_finite, which calls math.isfinite and returns False on the OverflowError raised for an int that cannot be represented as a float. Such an amount is reported as 'amount must be finite'. Only OverflowError is caught.",
+        "files": [
+          "demo-app/utils.py"
+        ],
+        "attempts": 1
+      },
+      "verification": {
+        "targeted": "3 passed: the 3 new test cases listed under reproduction.test",
+        "full_suite": "After this fix: 91 passed, 0 failed (was 3 failed, 88 passed); no previously passing test failed. Related run (-k 'validate or amounts or calculations'): 37 passed.",
+        "verified": true
+      },
+      "status": "Verification passed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed",
+        "Fix implemented",
+        "Verification passed"
+      ],
+      "notes": "Found by the orchestrator while performing the bug-scout role inline (code reading only, nothing run). Decision recorded for the user: the specification says an amount is an int or float that is finite and not zero, and also that validation and the average never raise. An int such as 10**400 cannot take part in the float arithmetic the calculations use, so accepting it would break the 'never raises' rule for average_transaction_value. The proposed fix rejects it with the existing 'amount must be finite' problem. The regression tests assert only the sourced rule (nothing raises), not which way the record is classified."
+    },
+    {
+      "id": "BH-009",
+      "title": "average_transaction_value raises OverflowError when integer amounts sum beyond the float range and a float follows",
+      "file": "demo-app/transaction_service.py",
+      "location": "TransactionService.average_transaction_value, the sum() call",
+      "severity": "Low",
+      "confidence": "high",
+      "source": "orchestrator",
+      "expected": "average_transaction_value never raises for a store that holds only dictionaries.",
+      "expected_behaviour_source": "demo-app/EXPECTED_BEHAVIOUR.md section average_transaction_value(), second bullet",
+      "actual": "Failed with OverflowError: int too large to convert to float at transaction_service.py:45 (the sum() line). Suite at that point: 1 failed, 92 passed.",
+      "evidence": "Probe run after the BH-008 fix: a store with amounts 10**308, 10**308 and 1.5 (each valid on its own) made average_transaction_value raise OverflowError: int too large to convert to float, while total_valid_transactions returned inf without raising.",
+      "reproduction": {
+        "test": [
+          "tests/test_bug_hunter_regressions.py::test_average_does_not_raise_when_integer_amounts_sum_beyond_float_range"
+        ],
+        "command": "cd demo-app && python3 -m pytest -p no:cacheprovider tests/test_bug_hunter_regressions.py::test_average_does_not_raise_when_integer_amounts_sum_beyond_float_range",
+        "result_before_fix": "Failed with OverflowError: int too large to convert to float at transaction_service.py:45 (the sum() line). Suite at that point: 1 failed, 92 passed.",
+        "reproduced": true
+      },
+      "root_cause": "Root cause: sum() starts from the int 0, so integer amounts accumulate as an arbitrary-precision int. Once that int is beyond the float range, adding the next float amount has to convert it and raises. total_valid_transactions does not have the problem because it accumulates from 0.0, where overflow gives inf instead of an exception. Symptom: the exception escapes average_transaction_value and the CLI summary.",
+      "fix": {
+        "summary": "Start the sum from 0.0 so the amounts accumulate as floats, the same way total_valid_transactions does.",
+        "files": [],
+        "attempts": 0
+      },
+      "verification": {
+        "targeted": "",
+        "full_suite": "",
+        "verified": null
+      },
+      "status": "Fix proposed",
+      "history": [
+        "Discovered",
+        "Under investigation",
+        "Reproduced",
+        "Confirmed",
+        "Fix proposed"
+      ],
+      "notes": "Found by the orchestrator while checking the neighbouring cases of BH-008 (the fix-review step of the test-engineer role, performed inline). Only reachable with integer amounts near 1e308."
+    }
+  ],
+  "observations": [
+    {
+      "summary": "get_transaction(True) / get_transaction(False): bool is a subclass of int in Python, so a bool index is treated as 1 / 0.",
+      "file": "demo-app/transaction_service.py",
+      "reason_not_a_defect": "The specification says only 'not an integer'. It excludes bool explicitly for amount but not for index, so whether a bool index should return None is a judgement call with no source."
+    },
+    {
+      "summary": "`python3 app.py discount 200 150` has no specified output; once apply_discount raises ValueError as specified, the CLI will show a Python traceback for an out-of-range percent.",
+      "file": "demo-app/app.py",
+      "reason_not_a_defect": "The app.py table in the specification has no row for an invalid discount, so the expected CLI output is unspecified."
+    },
+    {
+      "summary": "format_transaction would raise for a record whose amount is not a number (the :>10.2f format) or for a stored value that is not a dictionary.",
+      "file": "demo-app/app.py",
+      "reason_not_a_defect": "Not reachable with the built-in sample data, which is the only data the CLI loads; no specification row covers it."
+    },
+    {
+      "summary": "load() stores the caller's dictionaries by reference, so later edits to the caller's dictionaries show in the store.",
+      "file": "demo-app/transaction_service.py",
+      "reason_not_a_defect": "The specification says load appends every record 'as given'; only add_transaction is specified to copy."
+    }
+  ],
+  "reproduction_run": {
+    "command": "cd demo-app && python3 -m pytest -p no:cacheprovider --tb=short",
+    "passed": 38,
+    "failed": 53,
+    "errors": 0,
+    "output_file": "reports/reproduction-test-output.txt",
+    "note": "Existing suite plus tests/test_bug_hunter_regressions.py, application code still unmodified. 8 failures are the existing tests, 45 are new reproduction tests; the 28 new tests that pass are coverage for rules that already held."
+  },
+  "missing_test_coverage": [
+    "find_duplicates on an empty store returns []",
+    "total_valid_transactions on an empty store returns 0.0",
+    "average_transaction_value counts refunds as negative and ignores invalid records",
+    "get_transaction at the first and last valid positions, including a stored invalid record",
+    "apply_discount at the inclusive limits 0 and 100",
+    "validate_transaction for non-dictionaries, bool / NaN / infinite / None amounts, blank or non-string ids, and several broken rules at once",
+    "add_transaction stores a copy",
+    "all_transactions returns a new list",
+    "CLI rows `show 2` and `discount 200 15`"
+  ]
+}

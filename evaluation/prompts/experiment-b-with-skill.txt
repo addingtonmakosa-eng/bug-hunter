@@ -1,0 +1,7 @@
+You are working in the git repository at <SANDBOX>. Work only inside that directory and do not read anything outside it.
+
+The user typed `/bug-hunter` with no arguments. In Claude Code that loads .claude/skills/bug-hunter/SKILL.md into the session as your instructions. Read that file now and carry it out in full, as the main session. `$ARGUMENTS` is empty and `${CLAUDE_SKILL_DIR}` is .claude/skills/bug-hunter. The user's request is:
+
+Find and fix the bugs in this repository. Verify your fixes, and write a report of what you found and what you changed to reports/bug-hunter-report.md.
+
+Do not commit. When you finish, reply with a short summary.

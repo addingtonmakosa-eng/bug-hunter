@@ -1,0 +1,5 @@
+You are working in the git repository at <SANDBOX>. Work only inside that directory and do not read anything outside it.
+
+Find and fix the bugs in this repository. Verify your fixes, and write a report of what you found and what you changed to reports/bug-hunter-report.md.
+
+Do not commit. When you finish, reply with a short summary.

@@ -1,0 +1,307 @@
+diff --git a/demo-app/app.py b/demo-app/app.py
+index a4d1188..4fefd51 100644
+--- a/demo-app/app.py
++++ b/demo-app/app.py
+@@ -67,7 +67,13 @@ def cmd_show(service, args):
+ 
+ 
+ def cmd_discount(_service, args):
+-    print(f"{apply_discount(args.amount, args.percent):.2f}")
++    try:
++        discounted = apply_discount(args.amount, args.percent)
++    except ValueError as error:
++        print(f"error: {error}", file=sys.stderr)
++        return 2
++    print(f"{discounted:.2f}")
++    return 0
+ 
+ 
+ def cmd_validate(service, _args):
+@@ -101,8 +107,7 @@ def build_parser():
+ def main(argv=None):
+     args = build_parser().parse_args(argv)
+     service = build_service(empty=args.empty)
+-    args.func(service, args)
+-    return 0
++    return args.func(service, args) or 0
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/demo-app/tests/test_app.py b/demo-app/tests/test_app.py
+index ac650da..0f6a3ba 100644
+--- a/demo-app/tests/test_app.py
++++ b/demo-app/tests/test_app.py
+@@ -125,3 +125,154 @@ def test_total_ignores_invalid_records():
+ 
+ def test_total_subtracts_refunds(service):
+     assert service.total_valid_transactions() == 220.0
++
++
++# --- regression tests added with the bug fixes ----------------------------
++
++
++@pytest.mark.parametrize("currency", ["usd", "Usd", "US1", "12$", "   ", "ÀBC", "ＵＳＤ", "USD\n", "USDX", "", None, 840])
++def test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters(currency):
++    assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
++
++
++@pytest.mark.parametrize(
++    "amount",
++    [10**400, -(10**400), float("inf"), float("-inf"), float("nan"), True, None],
++    ids=["huge-int", "negative-huge-int", "inf", "negative-inf", "nan", "bool", "none"],
++)
++def test_validate_never_raises_on_unusable_amounts(amount):
++    assert len(validate_transaction(tx("A", amount))) == 1
++
++
++def test_validate_reports_one_problem_per_broken_rule():
++    assert len(validate_transaction(tx("  ", 0, currency="usd"))) == 3
++
++
++def test_validate_rejects_non_dictionary():
++    assert len(validate_transaction(["id", "amount", "currency"])) == 1
++
++
++def test_average_with_only_invalid_records_is_zero():
++    svc = TransactionService()
++    svc.load([tx("", 25.0), tx("A", 0), "not a record"])
++    assert svc.average_transaction_value() == 0.0
++
++
++def test_calculations_never_raise_on_large_or_unusable_amounts():
++    svc = TransactionService()
++    svc.load([tx("A", 10**308), tx("B", 10**308), tx("C", 1.5), tx("D", 10**400)])
++    assert len(svc.valid_transactions()) == 3
++    svc.average_transaction_value()
++    svc.total_valid_transactions()
++
++
++def test_find_duplicates_returns_every_later_repeat_in_order():
++    svc = TransactionService()
++    records = [tx("A", 1.0), tx("B", 2.0), tx("A", 3.0), tx("C", 4.0), tx("A", 5.0)]
++    svc.load(records)
++    assert svc.find_duplicates() == [records[2], records[4]]
++
++
++def test_find_duplicates_without_repeats_is_empty():
++    svc = TransactionService()
++    svc.load([tx("A", 1.0), tx("B", 2.0)])
++    assert svc.find_duplicates() == []
++    assert TransactionService().find_duplicates() == []
++
++
++def test_find_duplicates_ignores_invalid_records_and_keeps_count():
++    svc = TransactionService()
++    svc.load([tx("A", 1.0), tx("A", 0), tx("", 2.0), tx("", 3.0), tx("A", 4.0)])
++    assert svc.find_duplicates() == [tx("A", 4.0)]
++    assert svc.count() == 5
++
++
++@pytest.mark.parametrize("index", ["1", 1.0, None, True, [1], 4, -5])
++def test_get_transaction_returns_none_for_unusable_index(service, index):
++    assert service.get_transaction(index) is None
++
++
++def test_get_transaction_first_and_last(service):
++    assert service.get_transaction(0) == tx("A", 100.0)
++    assert service.get_transaction(3) == tx("C", -30.0)
++    assert TransactionService().get_transaction(0) is None
++
++
++def test_total_of_empty_store_is_zero():
++    assert TransactionService().total_valid_transactions() == 0.0
++
++
++def test_total_matches_the_documented_example():
++    svc = TransactionService()
++    svc.load([tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)])
++    assert svc.total_valid_transactions() == 120.0
++
++
++def test_apply_discount_boundaries():
++    assert apply_discount(80, 0) == 80.0
++    assert apply_discount(80, 100) == 0.0
++    assert str(apply_discount(-50, 100)) == "0.0"
++
++
++def test_apply_discount_rejects_nan_percent():
++    with pytest.raises(ValueError):
++        apply_discount(200, float("nan"))
++
++
++# --- command line ---------------------------------------------------------
++
++
++def run_cli(capsys, *argv):
++    import app
++
++    status = app.main(list(argv))
++    captured = capsys.readouterr()
++    return status, captured.out, captured.err
++
++
++def test_cli_summary(capsys):
++    status, out, _ = run_cli(capsys, "summary")
++    assert status == 0
++    assert out.splitlines() == [
++        "Records stored:      6",
++        "Valid transactions:  5",
++        "Net total:           501.25",
++        "Average value:       100.25",
++        "Duplicate records:   1",
++    ]
++
++
++def test_cli_empty_summary(capsys):
++    status, out, _ = run_cli(capsys, "--empty", "summary")
++    assert status == 0
++    assert out.splitlines() == [
++        "Records stored:      0",
++        "Valid transactions:  0",
++        "Net total:           0.00",
++        "Average value:       0.00",
++        "Duplicate records:   0",
++    ]
++
++
++def test_cli_duplicates_lists_the_second_txn_1002(capsys):
++    _, out, _ = run_cli(capsys, "duplicates")
++    lines = out.splitlines()
++    assert len(lines) == 1
++    assert lines[0].startswith("TXN-1002")
++
++
++def test_cli_show(capsys):
++    assert "TXN-1003" in run_cli(capsys, "show", "2")[1]
++    assert run_cli(capsys, "show", "99")[1] == "No transaction at position 99.\n"
++    assert run_cli(capsys, "show", "-1")[1] == "No transaction at position -1.\n"
++
++
++def test_cli_discount(capsys):
++    assert run_cli(capsys, "discount", "200", "15") == (0, "170.00\n", "")
++
++
++def test_cli_discount_out_of_range_reports_an_error(capsys):
++    status, out, err = run_cli(capsys, "discount", "200", "150")
++    assert status == 2
++    assert out == ""
++    assert err.startswith("error: ")
+diff --git a/demo-app/transaction_service.py b/demo-app/transaction_service.py
+index 4dfda9b..be0d644 100644
+--- a/demo-app/transaction_service.py
++++ b/demo-app/transaction_service.py
+@@ -40,27 +40,41 @@ class TransactionService:
+     def average_transaction_value(self):
+         """Average amount of the valid transactions."""
+         valid = self.valid_transactions()
+-        total = sum(tx["amount"] for tx in valid)
++        if not valid:
++            return 0.0
++        # Summing as floats: a sum of large ints cannot be added to a float.
++        total = sum(float(tx["amount"]) for tx in valid)
+         return round_money(total / len(valid))
+ 
+     def find_duplicates(self):
+-        """Find transactions that repeat the id of an earlier transaction."""
++        """Find transactions that repeat the id of an earlier transaction.
++
++        The first record with a given id is the original and is not returned.
++        The store is left untouched.
++        """
+         seen = set()
+-        unique = []
++        duplicates = []
+         for tx in self.valid_transactions():
+-            if tx["id"] not in seen:
++            if tx["id"] in seen:
++                duplicates.append(tx)
++            else:
+                 seen.add(tx["id"])
+-                unique.append(tx)
+-        self._transactions = unique
+-        return unique
++        return duplicates
+ 
+     def get_transaction(self, index):
+-        """Return the record stored at the given position."""
++        """Return the record stored at the given zero-based position.
++
++        Returns None when the index is not an integer or is out of range.
++        """
++        if isinstance(index, bool) or not isinstance(index, int):
++            return None
++        if index < 0 or index >= len(self._transactions):
++            return None
+         return self._transactions[index]
+ 
+     def total_valid_transactions(self):
+         """Net total of the valid transactions."""
+         total = 0.0
+         for tx in self.valid_transactions():
+-            total += abs(tx["amount"])
++            total += tx["amount"]
+         return round_money(total)
+diff --git a/demo-app/utils.py b/demo-app/utils.py
+index 9db9980..42f85e9 100644
+--- a/demo-app/utils.py
++++ b/demo-app/utils.py
+@@ -1,13 +1,26 @@
+ """Helper functions shared by the transaction manager."""
+ 
+ import math
++import re
+ 
+ REQUIRED_FIELDS = ("id", "amount", "currency")
+ 
++_CURRENCY_PATTERN = re.compile(r"[A-Z]{3}")
++
+ 
+ def round_money(value):
+     """Round a monetary value to two decimal places."""
+-    return round(float(value), 2)
++    # Adding 0.0 turns a negative zero into 0.0, so a result never prints as "-0.00".
++    return round(float(value), 2) + 0.0
++
++
++def _is_finite(number):
++    """True when an int or float is finite and fits in a float."""
++    try:
++        return math.isfinite(number)
++    except OverflowError:
++        # An int too large to convert to a float.
++        return False
+ 
+ 
+ def validate_transaction(transaction):
+@@ -30,14 +43,14 @@ def validate_transaction(transaction):
+     amount = transaction["amount"]
+     if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+         problems.append("amount must be a number")
+-    elif math.isnan(amount) or math.isinf(amount):
++    elif not _is_finite(amount):
+         problems.append("amount must be finite")
+     elif amount == 0:
+         problems.append("amount must not be zero")
+ 
+     currency = transaction["currency"]
+-    if not isinstance(currency, str) or len(currency) != 3:
+-        problems.append("currency must be a three-letter code")
++    if not isinstance(currency, str) or not _CURRENCY_PATTERN.fullmatch(currency):
++        problems.append("currency must be three uppercase ASCII letters")
+ 
+     return problems
+ 
+@@ -48,6 +61,12 @@ def is_valid_transaction(transaction):
+ 
+ 
+ def apply_discount(amount, percent):
+-    """Return the amount after taking a percentage discount off it."""
++    """Return the amount after taking a percentage discount off it.
++
++    Raises ValueError when the percentage is outside 0 to 100 inclusive.
++    """
++    # Written so that NaN, which fails every comparison, is rejected too.
++    if not 0 <= percent <= 100:
++        raise ValueError(f"percent must be between 0 and 100, got {percent!r}")
+     discounted = amount * (1 - percent / 100)
+     return round_money(discounted)

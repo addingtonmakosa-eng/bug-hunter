@@ -179,13 +179,16 @@ assessment. Do not run the tests yet.
    - State the expected behaviour **and its source** (spec section, existing
      test, docstring, caller). If no source exists and the behaviour is a
      judgement call, mark the defect *Unresolved (needs specification)*. Do
-     not guess.
+     not guess. If a source fixes part of the behaviour (for example "never
+     raises") and leaves the rest open, assert only the part that is stated.
    - Find or write a minimal reproduction. If an existing failing test
      already demonstrates the defect, use it. Otherwise add a test to a new
      file in the project's test directory, following its naming convention
      (for pytest: `tests/test_bug_hunter_regressions.py`). Do not edit or
      delete existing tests.
-   - Run it and capture the result.
+   - Run it and capture the result. Save the output of the reproduction
+     run to `reports/reproduction-test-output.txt`, and record the ids of
+     the defect's tests in its `reproduction.test` field.
    - Reproduction fails as predicted: *Reproduced*, then *Confirmed* once the
      expected-behaviour source is recorded.
    - Reproduction passes: the suspicion was wrong or the test is. Check the
@@ -221,40 +224,54 @@ Fix defects one at a time, in severity order:
    the test's input, or weaken an assertion.
 3. Keep public interfaces, signatures and return types unless the documented
    behaviour requires a change. Add no dependencies.
-4. If the file has uncommitted user changes (from Phase 1), edit around them
+4. If the fix needs a choice the specification does not make, take the
+   option that satisfies every rule that is stated, record the choice in the
+   defect's `notes`, and list it under Remaining Issues as a decision for
+   the user to confirm.
+5. If the file has uncommitted user changes (from Phase 1), edit around them
    and say so in the report.
-5. Set *Fix implemented*, record the files touched and increment
+6. Set *Fix implemented*, record the files touched and increment
    `fix.attempts`. Then run Phase 6 for this defect before starting the next.
+   A failed verification stops the queue until it has been explained.
 
 ## Phase 6: Verification and feedback
 
 After each fix:
 
-1. Run the defect's reproduction test. It must now pass.
+1. Run the defect's reproduction tests, selected by the test ids recorded
+   in the registry. They must now pass. Do not select them with a keyword
+   filter: it can pull in another defect's tests and report a failure that
+   is not this fix's.
 2. Run the related tests for that module.
-3. Run the full suite. No test that passed at baseline may fail.
+3. Run the full suite. No test that passed before this fix may fail. Tests
+   for defects that are not fixed yet are expected to keep failing.
+4. Append the commands and their result lines to
+   `reports/verification-log.txt`.
 
 Pass: *Verification passed*. Fail: *Verification failed*, then:
 
 - Read the failure. Decide whether the fix is wrong, the root cause was
-  misjudged, or the test contradicts the specification.
+  misjudged, the test contradicts the specification, or the wrong tests
+  were run.
 - A test is changed only when you can cite the specification against it;
   record that as its own defect.
 - Apply a corrected approach and verify again, within the retry budget.
 
 After the last defect:
 
-4. Run the full suite one final time. Save the output to
+5. Run the full suite one final time. Save the output to
    `reports/final-test-output.txt` and record the counts as `final`.
-5. Run the linter or static analysis only if the project already has one
+6. Run the linter or static analysis only if the project already has one
    configured and installed. Do not install one.
-6. Inspect `git diff` and `git status --short`. Every changed file must be
+7. Inspect `git diff` and `git status --short`. Every changed file must be
    explained by a defect in the registry. If you find a change that is not,
-   undo that edit by hand.
-7. Ask the **`test-engineer`** subagent to review: give it the diff, the
-   registry and the final test output, and ask whether each fix addresses its
-   defect's root cause and whether any regression test is missing. Act on
-   valid points within the budgets; record the rest under Remaining Issues.
+   undo that edit by hand. Save the diff to `reports/changes.diff`.
+8. Ask the **`test-engineer`** subagent to review. It cannot run git, so
+   give it the paths of `reports/changes.diff`, the registry, the
+   verification log and the final test output. Ask whether each fix
+   addresses its defect's root cause and whether any regression test is
+   missing. Act on valid points within the budgets; record the rest under
+   Remaining Issues.
 
 ## Phase 7: Reporting
 

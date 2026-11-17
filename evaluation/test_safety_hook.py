@@ -18,7 +18,7 @@ HOOK = Path(__file__).resolve().parent.parent / ".claude" / "hooks" / "block-uns
 def run_hook(command, tool_name="Bash"):
     payload = {"hook_event_name": "PreToolUse", "tool_name": tool_name, "tool_input": {"command": command}}
     return subprocess.run(
-        [sys.executable, str(HOOK)], input=json.dumps(payload), capture_output=True, text=True, timeout=10
+        [sys.executable, str(HOOK)], input=json.dumps(payload), capture_output=True, text=True, timeout=10, check=False
     )
 
 
@@ -96,5 +96,7 @@ def test_other_tools_are_ignored():
 
 
 def test_malformed_input_does_not_block():
-    result = subprocess.run([sys.executable, str(HOOK)], input="not json", capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, str(HOOK)], input="not json", capture_output=True, text=True, check=False
+    )
     assert result.returncode == 0

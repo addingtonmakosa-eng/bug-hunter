@@ -1,0 +1,120 @@
+diff --git a/demo-app/transaction_service.py b/demo-app/transaction_service.py
+index 4dfda9b..68b18ba 100644
+--- a/demo-app/transaction_service.py
++++ b/demo-app/transaction_service.py
+@@ -38,29 +38,45 @@ class TransactionService:
+         return [tx for tx in self._transactions if not validate_transaction(tx)]
+ 
+     def average_transaction_value(self):
+-        """Average amount of the valid transactions."""
++        """Average amount of the valid transactions, or 0.0 when there are none."""
+         valid = self.valid_transactions()
+-        total = sum(tx["amount"] for tx in valid)
++        if not valid:
++            return 0.0
++        # Sum as floats: adding a float to an int sum that has grown past the
++        # float range raises OverflowError, and this method must not raise.
++        total = sum(float(tx["amount"]) for tx in valid)
+         return round_money(total / len(valid))
+ 
+     def find_duplicates(self):
+-        """Find transactions that repeat the id of an earlier transaction."""
++        """Find transactions that repeat the id of an earlier transaction.
++
++        Returns every valid record whose id already appeared in an earlier
++        valid record, in insertion order. The store is not modified.
++        """
+         seen = set()
+-        unique = []
++        duplicates = []
+         for tx in self.valid_transactions():
+-            if tx["id"] not in seen:
++            if tx["id"] in seen:
++                duplicates.append(tx)
++            else:
+                 seen.add(tx["id"])
+-                unique.append(tx)
+-        self._transactions = unique
+-        return unique
++        return duplicates
+ 
+     def get_transaction(self, index):
+-        """Return the record stored at the given position."""
++        """Return the record stored at the given zero-based position.
++
++        Returns None when the index is not an integer, is negative, or is past
++        the end of the store. A bool is not accepted as an integer.
++        """
++        if isinstance(index, bool) or not isinstance(index, int):
++            return None
++        if index < 0 or index >= len(self._transactions):
++            return None
+         return self._transactions[index]
+ 
+     def total_valid_transactions(self):
+         """Net total of the valid transactions."""
+         total = 0.0
+         for tx in self.valid_transactions():
+-            total += abs(tx["amount"])
++            total += tx["amount"]
+         return round_money(total)
+diff --git a/demo-app/utils.py b/demo-app/utils.py
+index 9db9980..11ee471 100644
+--- a/demo-app/utils.py
++++ b/demo-app/utils.py
+@@ -5,6 +5,23 @@ import math
+ REQUIRED_FIELDS = ("id", "amount", "currency")
+ 
+ 
++def _is_finite(number):
++    """True when an int or float is finite and representable as a float.
++
++    ``math.isfinite`` raises OverflowError for an int too large to convert to
++    a float. Amounts are floats, so such a value is treated as not finite.
++    """
++    try:
++        return math.isfinite(number)
++    except OverflowError:
++        return False
++
++
++def _is_currency_code(value):
++    """True for exactly three uppercase ASCII letters, for example ``USD``."""
++    return isinstance(value, str) and len(value) == 3 and all("A" <= char <= "Z" for char in value)
++
++
+ def round_money(value):
+     """Round a monetary value to two decimal places."""
+     return round(float(value), 2)
+@@ -30,14 +47,14 @@ def validate_transaction(transaction):
+     amount = transaction["amount"]
+     if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+         problems.append("amount must be a number")
+-    elif math.isnan(amount) or math.isinf(amount):
++    elif not _is_finite(amount):
+         problems.append("amount must be finite")
+     elif amount == 0:
+         problems.append("amount must not be zero")
+ 
+     currency = transaction["currency"]
+-    if not isinstance(currency, str) or len(currency) != 3:
+-        problems.append("currency must be a three-letter code")
++    if not _is_currency_code(currency):
++        problems.append("currency must be three uppercase letters")
+ 
+     return problems
+ 
+@@ -48,6 +65,12 @@ def is_valid_transaction(transaction):
+ 
+ 
+ def apply_discount(amount, percent):
+-    """Return the amount after taking a percentage discount off it."""
++    """Return the amount after taking a percentage discount off it.
++
++    ``percent`` must be between 0 and 100 inclusive, otherwise ValueError is
++    raised. The comparison is written so that NaN is rejected as well.
++    """
++    if not 0 <= percent <= 100:
++        raise ValueError(f"percent must be between 0 and 100, got {percent!r}")
+     discounted = amount * (1 - percent / 100)
+     return round_money(discounted)

@@ -1,0 +1,334 @@
+"""Reproduction and regression tests added by Bug Hunter.
+
+Expected results come from EXPECTED_BEHAVIOUR.md. The tests were designed by
+the test-engineer specialist; each one names the defect it belongs to, or is
+marked as coverage for behaviour that was already correct.
+"""
+
+import copy
+
+import pytest
+
+import app
+from transaction_service import TransactionService
+from utils import apply_discount, is_valid_transaction, round_money, validate_transaction
+
+
+def tx(transaction_id, amount, currency="USD", description=""):
+    return {"id": transaction_id, "amount": amount, "currency": currency, "description": description}
+
+
+def loaded(*records):
+    svc = TransactionService()
+    svc.load(list(records))
+    return svc
+
+
+@pytest.fixture
+def service():
+    return loaded(tx("A", 100.0), tx("B", 50.0), tx("A", 100.0), tx("C", -30.0))
+
+
+def cli(capsys, *args):
+    app.main(list(args))
+    return capsys.readouterr().out.splitlines()
+
+
+# --- BH-001: find_duplicates ------------------------------------------------
+
+
+def test_find_duplicates_returns_every_later_repeat_in_order():
+    svc = loaded(tx("A", 10.0), tx("B", 20.0), tx("A", 30.0), tx("C", 40.0), tx("A", 50.0))
+    assert svc.find_duplicates() == [tx("A", 30.0), tx("A", 50.0)]
+
+
+def test_find_duplicates_ignores_invalid_records():
+    svc = loaded(tx("A", 0), tx("A", 10.0), tx("A", 20.0), tx("", 5.0), tx("", 6.0))
+    assert svc.find_duplicates() == [tx("A", 20.0)]
+
+
+def test_find_duplicates_does_not_raise_on_malformed_invalid_records():
+    svc = loaded({"amount": 5.0}, tx(["x"], 7.0), tx(["x"], 8.0), tx("A", 1.0), tx("A", 2.0))
+    assert svc.find_duplicates() == [tx("A", 2.0)]
+
+
+def test_find_duplicates_keeps_invalid_records_in_the_store():
+    svc = loaded(tx("A", 100.0), tx("", 25.0), tx("A", 100.0))
+    before = svc.all_transactions()
+    svc.find_duplicates()
+    assert svc.count() == 3
+    assert svc.all_transactions() == before
+
+
+def test_find_duplicates_does_not_modify_record_contents():
+    svc = loaded(tx("A", 100.0), tx("", 25.0), tx("A", 100.0))
+    before = copy.deepcopy(svc.all_transactions())
+    svc.find_duplicates()
+    assert svc.all_transactions() == before
+    assert svc.count() == 3
+
+
+def test_find_duplicates_with_no_repeats_is_empty():
+    assert loaded(tx("A", 1.0), tx("B", 2.0)).find_duplicates() == []
+    assert TransactionService().find_duplicates() == []
+
+
+def test_find_duplicates_gives_the_same_answer_twice(service):
+    first = service.find_duplicates()
+    second = service.find_duplicates()
+    assert first == second == [tx("A", 100.0)]
+    assert service.count() == 4
+
+
+def test_cli_summary_duplicate_count(capsys):
+    assert cli(capsys, "summary")[4].split()[-1] == "1"
+
+
+def test_cli_duplicates_prints_one_line(capsys):
+    lines = cli(capsys, "duplicates")
+    assert len(lines) == 1
+    assert "TXN-1002" in lines[0]
+
+
+# --- BH-002: total_valid_transactions ---------------------------------------
+
+
+def test_total_matches_the_specification_example():
+    assert loaded(tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)).total_valid_transactions() == 120.0
+
+
+def test_total_of_only_refunds_is_negative():
+    assert loaded(tx("A", -30.0), tx("B", -20.0)).total_valid_transactions() == -50.0
+
+
+def test_total_ignores_invalid_refunds():
+    assert loaded(tx("A", 100.0), tx("", -25.0), tx("B", -40.0)).total_valid_transactions() == 60.0
+
+
+def test_cli_summary_net_total(capsys):
+    assert cli(capsys, "summary")[2].split()[-1] == "501.25"
+
+
+# --- BH-003: average_transaction_value --------------------------------------
+
+
+def test_average_of_only_invalid_records_is_zero():
+    svc = loaded(tx("", 25.0), tx("A", 0), {"id": "B"}, {})
+    result = svc.average_transaction_value()
+    assert result == 0.0
+    assert isinstance(result, float)
+    assert svc.count() == 4
+
+
+def test_average_ignores_invalid_records():
+    assert loaded(tx("A", 100.0), tx("", 25.0), tx("B", 40.0)).average_transaction_value() == 70.0
+
+
+def test_cli_empty_summary(capsys):
+    values = [line.split()[-1] for line in cli(capsys, "--empty", "summary")]
+    assert values == ["0", "0", "0.00", "0.00", "0"]
+
+
+# --- BH-004: get_transaction ------------------------------------------------
+
+
+def test_get_transaction_index_equal_to_count_returns_none(service):
+    assert service.get_transaction(4) is None
+
+
+def test_get_transaction_first_and_last_positions(service):
+    assert service.get_transaction(0) == tx("A", 100.0)
+    assert service.get_transaction(3) == tx("C", -30.0)
+
+
+@pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+def test_get_transaction_non_integer_index_returns_none(service, index):
+    assert service.get_transaction(index) is None
+
+
+@pytest.mark.parametrize("index", [-4, -10])
+def test_get_transaction_far_negative_index_returns_none(service, index):
+    assert service.get_transaction(index) is None
+
+
+def test_get_transaction_integer_valued_float_index_returns_none(service):
+    assert service.get_transaction(2.0) is None
+
+
+def test_get_transaction_on_empty_store_returns_none():
+    assert TransactionService().get_transaction(0) is None
+
+
+def test_cli_show_out_of_range_prints_message(capsys):
+    assert cli(capsys, "show", "99") == ["No transaction at position 99."]
+
+
+# --- BH-005: apply_discount -------------------------------------------------
+
+
+def test_apply_discount_accepts_0_and_100():
+    assert apply_discount(80, 0) == 80.0
+    assert apply_discount(200, 100) == 0.0
+
+
+@pytest.mark.parametrize("percent", [100.01, -0.01, float("inf"), float("-inf")])
+def test_apply_discount_rejects_percent_outside_range(percent):
+    with pytest.raises(ValueError):
+        apply_discount(200, percent)
+
+
+def test_apply_discount_does_not_validate_amount():
+    assert apply_discount(-50, 10) == -45.0
+    assert apply_discount(0, 50) == 0.0
+
+
+# --- BH-006: currency format ------------------------------------------------
+
+
+def test_validate_rejects_lowercase_currency():
+    assert len(validate_transaction(tx("A", 10.0, currency="usd"))) == 1
+    assert is_valid_transaction(tx("A", 10.0, currency="usd")) is False
+
+
+@pytest.mark.parametrize(
+    "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+)
+def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+    assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+
+
+@pytest.mark.parametrize("currency", ["USD", "EUR", "JPY", "ZZZ"])
+def test_validate_accepts_any_three_uppercase_ascii_letters(currency):
+    assert validate_transaction(tx("A", 10.0, currency=currency)) == []
+
+
+@pytest.mark.parametrize("currency", ["us", "", "USDX", "USD\n"])
+def test_validate_wrong_length_currency_adds_exactly_one_problem(currency):
+    assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+
+
+@pytest.mark.parametrize("currency", [None, 840, ["U", "S", "D"], b"USD"])
+def test_validate_non_string_currency_adds_one_problem_without_raising(currency):
+    assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+
+
+def test_service_treats_lowercase_currency_record_as_invalid():
+    svc = TransactionService()
+    with pytest.raises(ValueError):
+        svc.add_transaction(tx("A", 10.0, currency="usd"))
+    assert svc.count() == 0
+
+    svc2 = loaded(tx("A", 100.0), tx("B", 40.0, currency="usd"))
+    assert svc2.total_valid_transactions() == 100.0
+    assert svc2.valid_transactions() == [tx("A", 100.0)]
+
+
+# --- BH-007: int amount too large for a float -------------------------------
+
+
+@pytest.mark.parametrize("amount", [10**400, -(10**400)], ids=["10**400", "-10**400"])
+def test_validate_does_not_raise_for_int_too_large_for_float(amount):
+    assert isinstance(validate_transaction(tx("A", amount)), list)
+
+
+def test_average_does_not_raise_for_int_too_large_for_float():
+    result = loaded(tx("A", 10**400), tx("B", 50.0)).average_transaction_value()
+    assert isinstance(result, float)
+
+
+def test_validate_accepts_large_int_that_fits_a_float():
+    assert validate_transaction(tx("A", 10**308)) == []
+
+
+@pytest.mark.parametrize(
+    "amount", [float("nan"), float("inf"), float("-inf"), True, False, None, "12.50", 0, 0.0, -0.0]
+)
+def test_validate_rejects_bad_amounts_with_exactly_one_problem(amount):
+    assert len(validate_transaction(tx("A", amount))) == 1
+
+
+# --- Coverage: behaviour that was already correct ---------------------------
+
+
+def test_total_of_empty_store_is_zero_float():
+    result = TransactionService().total_valid_transactions()
+    assert result == 0.0
+    assert isinstance(result, float)
+
+
+def test_total_is_rounded_to_two_places():
+    assert loaded(tx("A", 0.1), tx("B", 0.2)).total_valid_transactions() == 0.3
+
+
+def test_average_is_rounded_to_two_places():
+    assert loaded(tx("A", 1), tx("B", 2), tx("C", 2)).average_transaction_value() == 1.67
+
+
+def test_average_of_only_refunds_is_negative():
+    assert loaded(tx("A", -10.0), tx("B", -20.0)).average_transaction_value() == -15.0
+
+
+def test_apply_discount_rounds_to_two_places():
+    assert apply_discount(99.99, 33) == 66.99
+
+
+@pytest.mark.parametrize("value", [None, [], "A", 42, [("id", "A")]])
+def test_validate_non_dictionary_returns_one_problem(value):
+    assert len(validate_transaction(value)) == 1
+    assert is_valid_transaction(value) is False
+
+
+def test_validate_stops_after_missing_fields():
+    assert validate_transaction({"id": "", "amount": 0}) == ["missing field: currency"]
+
+
+def test_validate_reports_one_problem_per_broken_rule():
+    assert len(validate_transaction(tx("", 0, currency="US"))) == 3
+    assert len(validate_transaction(tx("   ", 10.0))) == 1
+    assert len(validate_transaction(tx(123, 10.0))) == 1
+
+
+def test_validate_accepts_int_refund_without_description():
+    assert validate_transaction({"id": "A", "amount": -5, "currency": "USD"}) == []
+
+
+def test_add_transaction_stores_a_copy():
+    svc = TransactionService()
+    record = tx("A", 10.0)
+    svc.add_transaction(record)
+    record["amount"] = 999.0
+    assert svc.all_transactions() == [tx("A", 10.0)]
+
+
+def test_all_and_valid_transactions_return_new_lists(service):
+    service.all_transactions().clear()
+    service.valid_transactions().clear()
+    assert service.count() == 4
+    assert service.all_transactions() == [tx("A", 100.0), tx("B", 50.0), tx("A", 100.0), tx("C", -30.0)]
+
+
+def test_load_appends_without_validation():
+    svc = loaded(tx("A", 100.0), tx("", 25.0))
+    svc.load([tx("B", 40.0)])
+    assert svc.count() == 3
+    assert svc.all_transactions() == [tx("A", 100.0), tx("", 25.0), tx("B", 40.0)]
+    assert svc.valid_transactions() == [tx("A", 100.0), tx("B", 40.0)]
+
+
+def test_round_money_returns_a_two_place_float():
+    assert round_money(10) == 10.0
+    assert isinstance(round_money(10), float)
+    assert round_money(1.234) == 1.23
+    assert round_money(1.236) == 1.24
+
+
+def test_cli_summary_counts_and_average(capsys):
+    lines = cli(capsys, "summary")
+    assert [lines[i].split()[-1] for i in (0, 1, 3)] == ["6", "5", "100.25"]
+
+
+def test_cli_show_and_discount_examples(capsys):
+    shown = "\n".join(cli(capsys, "show", "2"))
+    assert "TXN-1003" in shown
+    assert "-20.00" in shown
+    assert cli(capsys, "discount", "200", "15") == ["170.00"]

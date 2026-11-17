@@ -1,0 +1,874 @@
+.......FFF.FF.FF.FFFFFFFFFFFFFF.FF.FFFFFFFFF.FFFF.FFFFFFFFF............F [ 68%]
+FFF..............................                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_average_of_empty_store_is_zero ______________________
+
+    def test_average_of_empty_store_is_zero():
+>       assert TransactionService().average_transaction_value() == 0.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_app.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796fb2c10>
+
+    def average_transaction_value(self):
+        """Average amount of the valid transactions."""
+        valid = self.valid_transactions()
+        total = sum(tx["amount"] for tx in valid)
+>       return round_money(total / len(valid))
+                           ^^^^^^^^^^^^^^^^^^
+E       ZeroDivisionError: division by zero
+
+transaction_service.py:44: ZeroDivisionError
+_______________ test_find_duplicates_returns_the_repeated_record _______________
+
+service = <transaction_service.TransactionService object at 0x7f3796fbd810>
+
+    def test_find_duplicates_returns_the_repeated_record(service):
+>       assert service.find_duplicates() == [tx("A", 100.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         Left contains 2 more items, first extra item: {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_app.py:76: AssertionError
+_______________ test_find_duplicates_leaves_the_store_unchanged ________________
+
+service = <transaction_service.TransactionService object at 0x7f3796fbda70>
+
+    def test_find_duplicates_leaves_the_store_unchanged(service):
+        before = service.all_transactions()
+        service.find_duplicates()
+>       assert service.all_transactions() == before
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         At index 2 diff: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}
+E         Right contains one more item: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_app.py:82: AssertionError
+________________ test_apply_discount_rejects_percent_above_100 _________________
+
+    def test_apply_discount_rejects_percent_above_100():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_app.py:93: Failed
+_________________ test_apply_discount_rejects_negative_percent _________________
+
+    def test_apply_discount_rejects_negative_percent():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_app.py:98: Failed
+________________ test_get_transaction_out_of_range_returns_none ________________
+
+service = <transaction_service.TransactionService object at 0x7f3796f67df0>
+
+    def test_get_transaction_out_of_range_returns_none(service):
+>       assert service.get_transaction(10) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_app.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796f67df0>
+index = 10
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+_______________ test_get_transaction_negative_index_returns_none _______________
+
+service = <transaction_service.TransactionService object at 0x7f3796f67790>
+
+    def test_get_transaction_negative_index_returns_none(service):
+>       assert service.get_transaction(-1) is None
+E       AssertionError: assert {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} is None
+E        +  where {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} = get_transaction(-1)
+E        +    where get_transaction = <transaction_service.TransactionService object at 0x7f3796f67790>.get_transaction
+
+tests/test_app.py:114: AssertionError
+_________________________ test_total_subtracts_refunds _________________________
+
+service = <transaction_service.TransactionService object at 0x7f3796f9da50>
+
+    def test_total_subtracts_refunds(service):
+>       assert service.total_valid_transactions() == 220.0
+E       assert 280.0 == 220.0
+E        +  where 280.0 = total_valid_transactions()
+E        +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7f3796f9da50>.total_valid_transactions
+
+tests/test_app.py:127: AssertionError
+___________ test_find_duplicates_returns_every_later_repeat_in_order ___________
+
+    def test_find_duplicates_returns_every_later_repeat_in_order():
+        svc = loaded(tx("A", 10.0), tx("B", 20.0), tx("A", 30.0), tx("C", 40.0), tx("A", 50.0))
+>       assert svc.find_duplicates() == [tx("A", 30.0), tx("A", 50.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         At index 0 diff: {'id': 'A', 'amount': 10.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 30.0, 'currency': 'USD', 'description': ''}
+E         Left contains one more item: {'id': 'C', 'amount': 40.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_bug_hunter_regressions.py:40: AssertionError
+_________________ test_find_duplicates_ignores_invalid_records _________________
+
+    def test_find_duplicates_ignores_invalid_records():
+        svc = loaded(tx("A", 0), tx("A", 10.0), tx("A", 20.0), tx("", 5.0), tx("", 6.0))
+>       assert svc.find_duplicates() == [tx("A", 20.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         At index 0 diff: {'id': 'A', 'amount': 10.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 20.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_bug_hunter_regressions.py:45: AssertionError
+_______ test_find_duplicates_does_not_raise_on_malformed_invalid_records _______
+
+    def test_find_duplicates_does_not_raise_on_malformed_invalid_records():
+        svc = loaded({"amount": 5.0}, tx(["x"], 7.0), tx(["x"], 8.0), tx("A", 1.0), tx("A", 2.0))
+>       assert svc.find_duplicates() == [tx("A", 2.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         At index 0 diff: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 2.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_bug_hunter_regressions.py:50: AssertionError
+___________ test_find_duplicates_keeps_invalid_records_in_the_store ____________
+
+    def test_find_duplicates_keeps_invalid_records_in_the_store():
+        svc = loaded(tx("A", 100.0), tx("", 25.0), tx("A", 100.0))
+        before = svc.all_transactions()
+        svc.find_duplicates()
+>       assert svc.count() == 3
+E       assert 1 == 3
+E        +  where 1 = count()
+E        +    where count = <transaction_service.TransactionService object at 0x7f3796e874d0>.count
+
+tests/test_bug_hunter_regressions.py:57: AssertionError
+________________ test_find_duplicates_with_no_repeats_is_empty _________________
+
+    def test_find_duplicates_with_no_repeats_is_empty():
+>       assert loaded(tx("A", 1.0), tx("B", 2.0)).find_duplicates() == []
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == []
+E         
+E         Left contains 2 more items, first extra item: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_bug_hunter_regressions.py:62: AssertionError
+_______________ test_find_duplicates_gives_the_same_answer_twice _______________
+
+service = <transaction_service.TransactionService object at 0x7f3796ee3dd0>
+
+    def test_find_duplicates_gives_the_same_answer_twice(service):
+        first = service.find_duplicates()
+        second = service.find_duplicates()
+>       assert first == second == [tx("A", 100.0)]
+E       AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E         
+E         Left contains 2 more items, first extra item: {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}
+E         Use -v to get more diff
+
+tests/test_bug_hunter_regressions.py:69: AssertionError
+_______________________ test_cli_summary_duplicate_count _______________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3796e45400>
+
+    def test_cli_summary_duplicate_count(capsys):
+>       assert cli(capsys, "summary")[4].split()[-1] == "1"
+E       AssertionError: assert '4' == '1'
+E         
+E         - 1
+E         + 4
+
+tests/test_bug_hunter_regressions.py:74: AssertionError
+_____________________ test_cli_duplicates_prints_one_line ______________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3796eb9950>
+
+    def test_cli_duplicates_prints_one_line(capsys):
+        lines = cli(capsys, "duplicates")
+>       assert len(lines) == 1
+E       AssertionError: assert 4 == 1
+E        +  where 4 = len(['TXN-1001       120.00 USD  Office chairs', 'TXN-1002        45.50 USD  Printer paper', 'TXN-1003       -20.00 USD  Refund: damaged paper', 'TXN-1004       310.25 USD  Conference ticket'])
+
+tests/test_bug_hunter_regressions.py:79: AssertionError
+_________________ test_total_matches_the_specification_example _________________
+
+    def test_total_matches_the_specification_example():
+>       assert loaded(tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)).total_valid_transactions() == 120.0
+E       AssertionError: assert 180.0 == 120.0
+E        +  where 180.0 = total_valid_transactions()
+E        +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7f37969dfc20>.total_valid_transactions
+E        +      where <transaction_service.TransactionService object at 0x7f37969dfc20> = loaded({'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': -30.0, 'currency': 'USD', 'description': ''}, {'id': 'C', 'amount': 50.0, 'currency': 'USD', 'description': ''})
+E        +        where {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''} = tx('A', 100.0)
+E        +        and   {'id': 'B', 'amount': -30.0, 'currency': 'USD', 'description': ''} = tx('B', -30.0)
+E        +        and   {'id': 'C', 'amount': 50.0, 'currency': 'USD', 'description': ''} = tx('C', 50.0)
+
+tests/test_bug_hunter_regressions.py:87: AssertionError
+____________________ test_total_of_only_refunds_is_negative ____________________
+
+    def test_total_of_only_refunds_is_negative():
+>       assert loaded(tx("A", -30.0), tx("B", -20.0)).total_valid_transactions() == -50.0
+E       AssertionError: assert 50.0 == -50.0
+E        +  where 50.0 = total_valid_transactions()
+E        +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7f3796e9d630>.total_valid_transactions
+E        +      where <transaction_service.TransactionService object at 0x7f3796e9d630> = loaded({'id': 'A', 'amount': -30.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': -20.0, 'currency': 'USD', 'description': ''})
+E        +        where {'id': 'A', 'amount': -30.0, 'currency': 'USD', 'description': ''} = tx('A', -30.0)
+E        +        and   {'id': 'B', 'amount': -20.0, 'currency': 'USD', 'description': ''} = tx('B', -20.0)
+
+tests/test_bug_hunter_regressions.py:91: AssertionError
+______________________ test_total_ignores_invalid_refunds ______________________
+
+    def test_total_ignores_invalid_refunds():
+>       assert loaded(tx("A", 100.0), tx("", -25.0), tx("B", -40.0)).total_valid_transactions() == 60.0
+E       AssertionError: assert 140.0 == 60.0
+E        +  where 140.0 = total_valid_transactions()
+E        +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7f3796e9c690>.total_valid_transactions
+E        +      where <transaction_service.TransactionService object at 0x7f3796e9c690> = loaded({'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}, {'id': '', 'amount': -25.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': -40.0, 'currency': 'USD', 'description': ''})
+E        +        where {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''} = tx('A', 100.0)
+E        +        and   {'id': '', 'amount': -25.0, 'currency': 'USD', 'description': ''} = tx('', -25.0)
+E        +        and   {'id': 'B', 'amount': -40.0, 'currency': 'USD', 'description': ''} = tx('B', -40.0)
+
+tests/test_bug_hunter_regressions.py:95: AssertionError
+__________________________ test_cli_summary_net_total __________________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3796eb9950>
+
+    def test_cli_summary_net_total(capsys):
+>       assert cli(capsys, "summary")[2].split()[-1] == "501.25"
+E       AssertionError: assert '541.25' == '501.25'
+E         
+E         - 501.25
+E         ?  ^
+E         + 541.25
+E         ?  ^
+
+tests/test_bug_hunter_regressions.py:99: AssertionError
+_________________ test_average_of_only_invalid_records_is_zero _________________
+
+    def test_average_of_only_invalid_records_is_zero():
+        svc = loaded(tx("", 25.0), tx("A", 0), {"id": "B"}, {})
+>       result = svc.average_transaction_value()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:107: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796dcb750>
+
+    def average_transaction_value(self):
+        """Average amount of the valid transactions."""
+        valid = self.valid_transactions()
+        total = sum(tx["amount"] for tx in valid)
+>       return round_money(total / len(valid))
+                           ^^^^^^^^^^^^^^^^^^
+E       ZeroDivisionError: division by zero
+
+transaction_service.py:44: ZeroDivisionError
+____________________________ test_cli_empty_summary ____________________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3796fbf5c0>
+
+    def test_cli_empty_summary(capsys):
+>       values = [line.split()[-1] for line in cli(capsys, "--empty", "summary")]
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_bug_hunter_regressions.py:31: in cli
+    app.main(list(args))
+app.py:104: in main
+    args.func(service, args)
+app.py:48: in cmd_summary
+    print(f"Average value:       {service.average_transaction_value():.2f}")
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ecbee0>
+
+    def average_transaction_value(self):
+        """Average amount of the valid transactions."""
+        valid = self.valid_transactions()
+        total = sum(tx["amount"] for tx in valid)
+>       return round_money(total / len(valid))
+                           ^^^^^^^^^^^^^^^^^^
+E       ZeroDivisionError: division by zero
+
+transaction_service.py:44: ZeroDivisionError
+----------------------------- Captured stdout call -----------------------------
+Records stored:      0
+Valid transactions:  0
+Net total:           0.00
+____________ test_get_transaction_index_equal_to_count_returns_none ____________
+
+service = <transaction_service.TransactionService object at 0x7f3796ecb380>
+
+    def test_get_transaction_index_equal_to_count_returns_none(service):
+>       assert service.get_transaction(4) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:126: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ecb380>
+index = 4
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+____________ test_get_transaction_non_integer_index_returns_none[1] ____________
+
+service = <transaction_service.TransactionService object at 0x7f3796ba8f50>
+index = '1'
+
+    @pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+    def test_get_transaction_non_integer_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ba8f50>
+index = '1'
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: list indices must be integers or slices, not str
+
+transaction_service.py:59: TypeError
+___________ test_get_transaction_non_integer_index_returns_none[1.5] ___________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed2710>
+index = 1.5
+
+    @pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+    def test_get_transaction_non_integer_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed2710>
+index = 1.5
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: list indices must be integers or slices, not float
+
+transaction_service.py:59: TypeError
+__________ test_get_transaction_non_integer_index_returns_none[None] ___________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed3070>
+index = None
+
+    @pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+    def test_get_transaction_non_integer_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed3070>
+index = None
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: list indices must be integers or slices, not NoneType
+
+transaction_service.py:59: TypeError
+_________ test_get_transaction_non_integer_index_returns_none[index3] __________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed28f0>
+index = [1]
+
+    @pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+    def test_get_transaction_non_integer_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed28f0>
+index = [1]
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: list indices must be integers or slices, not list
+
+transaction_service.py:59: TypeError
+_________ test_get_transaction_non_integer_index_returns_none[index4] __________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed2b70>
+index = slice(0, 2, None)
+
+    @pytest.mark.parametrize("index", ["1", 1.5, None, [1], slice(0, 2)])
+    def test_get_transaction_non_integer_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+E       AssertionError: assert [{'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}] is None
+E        +  where [{'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}] = get_transaction(slice(0, 2, None))
+E        +    where get_transaction = <transaction_service.TransactionService object at 0x7f3796ed2b70>.get_transaction
+
+tests/test_bug_hunter_regressions.py:136: AssertionError
+___________ test_get_transaction_far_negative_index_returns_none[-4] ___________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed33e0>
+index = -4
+
+    @pytest.mark.parametrize("index", [-4, -10])
+    def test_get_transaction_far_negative_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+E       AssertionError: assert {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''} is None
+E        +  where {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''} = get_transaction(-4)
+E        +    where get_transaction = <transaction_service.TransactionService object at 0x7f3796ed33e0>.get_transaction
+
+tests/test_bug_hunter_regressions.py:141: AssertionError
+__________ test_get_transaction_far_negative_index_returns_none[-10] ___________
+
+service = <transaction_service.TransactionService object at 0x7f3796ed2cb0>
+index = -10
+
+    @pytest.mark.parametrize("index", [-4, -10])
+    def test_get_transaction_far_negative_index_returns_none(service, index):
+>       assert service.get_transaction(index) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed2cb0>
+index = -10
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+_______________ test_get_transaction_on_empty_store_returns_none _______________
+
+    def test_get_transaction_on_empty_store_returns_none():
+>       assert TransactionService().get_transaction(0) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed1b80>
+index = 0
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+__________________ test_cli_show_out_of_range_prints_message ___________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3796fbe060>
+
+    def test_cli_show_out_of_range_prints_message(capsys):
+>       assert cli(capsys, "show", "99") == ["No transaction at position 99."]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:149: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_bug_hunter_regressions.py:31: in cli
+    app.main(list(args))
+app.py:104: in main
+    args.func(service, args)
+app.py:62: in cmd_show
+    transaction = service.get_transaction(args.index)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <transaction_service.TransactionService object at 0x7f3796ed3840>
+index = 99
+
+    def get_transaction(self, index):
+        """Return the record stored at the given position."""
+>       return self._transactions[index]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+transaction_service.py:59: IndexError
+__________ test_apply_discount_rejects_percent_outside_range[100.01] ___________
+
+percent = 100.01
+
+    @pytest.mark.parametrize("percent", [100.01, -0.01, float("inf"), float("-inf")])
+    def test_apply_discount_rejects_percent_outside_range(percent):
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_bug_hunter_regressions.py:162: Failed
+___________ test_apply_discount_rejects_percent_outside_range[-0.01] ___________
+
+percent = -0.01
+
+    @pytest.mark.parametrize("percent", [100.01, -0.01, float("inf"), float("-inf")])
+    def test_apply_discount_rejects_percent_outside_range(percent):
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_bug_hunter_regressions.py:162: Failed
+____________ test_apply_discount_rejects_percent_outside_range[inf] ____________
+
+percent = inf
+
+    @pytest.mark.parametrize("percent", [100.01, -0.01, float("inf"), float("-inf")])
+    def test_apply_discount_rejects_percent_outside_range(percent):
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_bug_hunter_regressions.py:162: Failed
+___________ test_apply_discount_rejects_percent_outside_range[-inf] ____________
+
+percent = -inf
+
+    @pytest.mark.parametrize("percent", [100.01, -0.01, float("inf"), float("-inf")])
+    def test_apply_discount_rejects_percent_outside_range(percent):
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_bug_hunter_regressions.py:162: Failed
+___________________ test_validate_rejects_lowercase_currency ___________________
+
+    def test_validate_rejects_lowercase_currency():
+>       assert len(validate_transaction(tx("A", 10.0, currency="usd"))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'usd', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'usd', 'description': ''} = tx('A', 10.0, currency='usd')
+
+tests/test_bug_hunter_regressions.py:175: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[Usd] _
+
+currency = 'Usd'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'Usd', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'Usd', 'description': ''} = tx('A', 10.0, currency='Usd')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[US1] _
+
+currency = 'US1'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'US1', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'US1', 'description': ''} = tx('A', 10.0, currency='US1')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[123] _
+
+currency = '123'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': '123', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': '123', 'description': ''} = tx('A', 10.0, currency='123')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[U$D] _
+
+currency = 'U$D'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'U$D', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'U$D', 'description': ''} = tx('A', 10.0, currency='U$D')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[U D] _
+
+currency = 'U D'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'U D', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'U D', 'description': ''} = tx('A', 10.0, currency='U D')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[   ] _
+
+currency = '   '
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': '   ', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': '   ', 'description': ''} = tx('A', 10.0, currency='   ')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[\xc4\xd6\xdc] _
+
+currency = 'ÄÖÜ'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'ÄÖÜ', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'ÄÖÜ', 'description': ''} = tx('A', 10.0, currency='ÄÖÜ')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+_ test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[\uff35\uff33\uff24] _
+
+currency = 'ＵＳＤ'
+
+    @pytest.mark.parametrize(
+        "currency", ["Usd", "US1", "123", "U$D", "U D", "   ", "ÄÖÜ", "ＵＳＤ"]
+    )
+    def test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii(currency):
+>       assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'ＵＳＤ', 'description': ''})
+E        +      where {'id': 'A', 'amount': 10.0, 'currency': 'ＵＳＤ', 'description': ''} = tx('A', 10.0, currency='ＵＳＤ')
+
+tests/test_bug_hunter_regressions.py:183: AssertionError
+___________ test_service_treats_lowercase_currency_record_as_invalid ___________
+
+    def test_service_treats_lowercase_currency_record_as_invalid():
+        svc = TransactionService()
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_bug_hunter_regressions.py:203: Failed
+______ test_validate_does_not_raise_for_int_too_large_for_float[10**400] _______
+
+amount = 100000000000000000...0000000000000000000
+
+    @pytest.mark.parametrize("amount", [10**400, -(10**400)], ids=["10**400", "-10**400"])
+    def test_validate_does_not_raise_for_int_too_large_for_float(amount):
+>       assert isinstance(validate_transaction(tx("A", amount)), list)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+transaction = {'id': 'A', 'amount': 100000000000000000...0000000000000000000, 'currency': 'USD', 'description': ''}
+
+    def validate_transaction(transaction):
+        """Check a transaction record.
+    
+        Returns a list of human-readable problems. An empty list means the
+        record is valid.
+        """
+        if not isinstance(transaction, dict):
+            return ["transaction must be a dictionary"]
+    
+        problems = [f"missing field: {field}" for field in REQUIRED_FIELDS if field not in transaction]
+        if problems:
+            return problems
+    
+        transaction_id = transaction["id"]
+        if not isinstance(transaction_id, str) or not transaction_id.strip():
+            problems.append("id must be a non-empty string")
+    
+        amount = transaction["amount"]
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            problems.append("amount must be a number")
+>       elif math.isnan(amount) or math.isinf(amount):
+             ^^^^^^^^^^^^^^^^^^
+E       OverflowError: int too large to convert to float
+
+utils.py:33: OverflowError
+______ test_validate_does_not_raise_for_int_too_large_for_float[-10**400] ______
+
+amount = -10000000000000000...0000000000000000000
+
+    @pytest.mark.parametrize("amount", [10**400, -(10**400)], ids=["10**400", "-10**400"])
+    def test_validate_does_not_raise_for_int_too_large_for_float(amount):
+>       assert isinstance(validate_transaction(tx("A", amount)), list)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+transaction = {'id': 'A', 'amount': -10000000000000000...0000000000000000000, 'currency': 'USD', 'description': ''}
+
+    def validate_transaction(transaction):
+        """Check a transaction record.
+    
+        Returns a list of human-readable problems. An empty list means the
+        record is valid.
+        """
+        if not isinstance(transaction, dict):
+            return ["transaction must be a dictionary"]
+    
+        problems = [f"missing field: {field}" for field in REQUIRED_FIELDS if field not in transaction]
+        if problems:
+            return problems
+    
+        transaction_id = transaction["id"]
+        if not isinstance(transaction_id, str) or not transaction_id.strip():
+            problems.append("id must be a non-empty string")
+    
+        amount = transaction["amount"]
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            problems.append("amount must be a number")
+>       elif math.isnan(amount) or math.isinf(amount):
+             ^^^^^^^^^^^^^^^^^^
+E       OverflowError: int too large to convert to float
+
+utils.py:33: OverflowError
+___________ test_average_does_not_raise_for_int_too_large_for_float ____________
+
+    def test_average_does_not_raise_for_int_too_large_for_float():
+>       result = loaded(tx("A", 10**400), tx("B", 50.0)).average_transaction_value()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_bug_hunter_regressions.py:221: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+transaction_service.py:42: in average_transaction_value
+    valid = self.valid_transactions()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:38: in valid_transactions
+    return [tx for tx in self._transactions if not validate_transaction(tx)]
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+transaction = {'id': 'A', 'amount': 100000000000000000...0000000000000000000, 'currency': 'USD', 'description': ''}
+
+    def validate_transaction(transaction):
+        """Check a transaction record.
+    
+        Returns a list of human-readable problems. An empty list means the
+        record is valid.
+        """
+        if not isinstance(transaction, dict):
+            return ["transaction must be a dictionary"]
+    
+        problems = [f"missing field: {field}" for field in REQUIRED_FIELDS if field not in transaction]
+        if problems:
+            return problems
+    
+        transaction_id = transaction["id"]
+        if not isinstance(transaction_id, str) or not transaction_id.strip():
+            problems.append("id must be a non-empty string")
+    
+        amount = transaction["amount"]
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            problems.append("amount must be a number")
+>       elif math.isnan(amount) or math.isinf(amount):
+             ^^^^^^^^^^^^^^^^^^
+E       OverflowError: int too large to convert to float
+
+utils.py:33: OverflowError
+=========================== short test summary info ============================
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero - ZeroDivisionE...
+FAILED tests/test_app.py::test_find_duplicates_returns_the_repeated_record - ...
+FAILED tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged - A...
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100 - Fai...
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent - Fail...
+FAILED tests/test_app.py::test_get_transaction_out_of_range_returns_none - In...
+FAILED tests/test_app.py::test_get_transaction_negative_index_returns_none - ...
+FAILED tests/test_app.py::test_total_subtracts_refunds - assert 280.0 == 220.0
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_returns_every_later_repeat_in_order
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_ignores_invalid_records
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_does_not_raise_on_malformed_invalid_records
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_invalid_records_in_the_store
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_with_no_repeats_is_empty
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_gives_the_same_answer_twice
+FAILED tests/test_bug_hunter_regressions.py::test_cli_summary_duplicate_count
+FAILED tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_one_line
+FAILED tests/test_bug_hunter_regressions.py::test_total_matches_the_specification_example
+FAILED tests/test_bug_hunter_regressions.py::test_total_of_only_refunds_is_negative
+FAILED tests/test_bug_hunter_regressions.py::test_total_ignores_invalid_refunds
+FAILED tests/test_bug_hunter_regressions.py::test_cli_summary_net_total - Ass...
+FAILED tests/test_bug_hunter_regressions.py::test_average_of_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary - ZeroDiv...
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[1]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[1.5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[None]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[index3]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[index4]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_far_negative_index_returns_none[-4]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_far_negative_index_returns_none[-10]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_out_of_range_prints_message
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[inf]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[-inf]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_lowercase_currency
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[123]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[U$D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[   ]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[\xc4\xd6\xdc]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_three_character_currency_that_is_not_uppercase_ascii[\uff35\uff33\uff24]
+FAILED tests/test_bug_hunter_regressions.py::test_service_treats_lowercase_currency_record_as_invalid
+FAILED tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_int_too_large_for_float[10**400]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_int_too_large_for_float[-10**400]
+FAILED tests/test_bug_hunter_regressions.py::test_average_does_not_raise_for_int_too_large_for_float
+49 failed, 56 passed in 0.30s

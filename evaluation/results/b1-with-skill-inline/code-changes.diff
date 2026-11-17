@@ -1,0 +1,74 @@
+diff --git a/demo-app/transaction_service.py b/demo-app/transaction_service.py
+index 4dfda9b..ae8e07d 100644
+--- a/demo-app/transaction_service.py
++++ b/demo-app/transaction_service.py
+@@ -40,27 +40,31 @@ class TransactionService:
+     def average_transaction_value(self):
+         """Average amount of the valid transactions."""
+         valid = self.valid_transactions()
++        if not valid:
++            return 0.0
+         total = sum(tx["amount"] for tx in valid)
+         return round_money(total / len(valid))
+ 
+     def find_duplicates(self):
+         """Find transactions that repeat the id of an earlier transaction."""
+         seen = set()
+-        unique = []
++        duplicates = []
+         for tx in self.valid_transactions():
+-            if tx["id"] not in seen:
++            if tx["id"] in seen:
++                duplicates.append(tx)
++            else:
+                 seen.add(tx["id"])
+-                unique.append(tx)
+-        self._transactions = unique
+-        return unique
++        return duplicates
+ 
+     def get_transaction(self, index):
+         """Return the record stored at the given position."""
++        if not isinstance(index, int) or index < 0 or index >= len(self._transactions):
++            return None
+         return self._transactions[index]
+ 
+     def total_valid_transactions(self):
+         """Net total of the valid transactions."""
+         total = 0.0
+         for tx in self.valid_transactions():
+-            total += abs(tx["amount"])
++            total += tx["amount"]
+         return round_money(total)
+diff --git a/demo-app/utils.py b/demo-app/utils.py
+index 9db9980..e18e189 100644
+--- a/demo-app/utils.py
++++ b/demo-app/utils.py
+@@ -30,13 +30,17 @@ def validate_transaction(transaction):
+     amount = transaction["amount"]
+     if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+         problems.append("amount must be a number")
+-    elif math.isnan(amount) or math.isinf(amount):
++    elif isinstance(amount, float) and (math.isnan(amount) or math.isinf(amount)):
+         problems.append("amount must be finite")
+     elif amount == 0:
+         problems.append("amount must not be zero")
+ 
+     currency = transaction["currency"]
+-    if not isinstance(currency, str) or len(currency) != 3:
++    if (
++        not isinstance(currency, str)
++        or len(currency) != 3
++        or not (currency.isascii() and currency.isalpha() and currency.isupper())
++    ):
+         problems.append("currency must be a three-letter code")
+ 
+     return problems
+@@ -49,5 +53,7 @@ def is_valid_transaction(transaction):
+ 
+ def apply_discount(amount, percent):
+     """Return the amount after taking a percentage discount off it."""
++    if not 0 <= percent <= 100:
++        raise ValueError("percent must be between 0 and 100")
+     discounted = amount * (1 - percent / 100)
+     return round_money(discounted)

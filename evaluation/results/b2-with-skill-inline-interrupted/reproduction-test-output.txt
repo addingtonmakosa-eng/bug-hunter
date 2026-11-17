@@ -1,0 +1,435 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/claude/eval/run-b2/demo-app
+configfile: pytest.ini
+testpaths: tests
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collected 91 items
+
+tests/test_app.py .......FFF.FF.FF.F                                     [ 19%]
+tests/test_bug_hunter_regressions.py FFFF.FFF.F.FFFFFFFFFFF.FFFFFFFF.FFF [ 58%]
+FFFFFF...FFFFFFFFF....................                                   [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_average_of_empty_store_is_zero ______________________
+tests/test_app.py:69: in test_average_of_empty_store_is_zero
+    assert TransactionService().average_transaction_value() == 0.0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:44: in average_transaction_value
+    return round_money(total / len(valid))
+                       ^^^^^^^^^^^^^^^^^^
+E   ZeroDivisionError: division by zero
+_______________ test_find_duplicates_returns_the_repeated_record _______________
+tests/test_app.py:76: in test_find_duplicates_returns_the_repeated_record
+    assert service.find_duplicates() == [tx("A", 100.0)]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E     
+E     Left contains 2 more items, first extra item: {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+_______________ test_find_duplicates_leaves_the_store_unchanged ________________
+tests/test_app.py:82: in test_find_duplicates_leaves_the_store_unchanged
+    assert service.all_transactions() == before
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E     
+E     At index 2 diff: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}
+E     Right contains one more item: {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+________________ test_apply_discount_rejects_percent_above_100 _________________
+tests/test_app.py:93: in test_apply_discount_rejects_percent_above_100
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_________________ test_apply_discount_rejects_negative_percent _________________
+tests/test_app.py:98: in test_apply_discount_rejects_negative_percent
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+________________ test_get_transaction_out_of_range_returns_none ________________
+tests/test_app.py:110: in test_get_transaction_out_of_range_returns_none
+    assert service.get_transaction(10) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+_______________ test_get_transaction_negative_index_returns_none _______________
+tests/test_app.py:114: in test_get_transaction_negative_index_returns_none
+    assert service.get_transaction(-1) is None
+E   AssertionError: assert {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} is None
+E    +  where {'id': 'C', 'amount': -30.0, 'currency': 'USD', 'description': ''} = get_transaction(-1)
+E    +    where get_transaction = <transaction_service.TransactionService object at 0x7fbb48dd6e00>.get_transaction
+_________________________ test_total_subtracts_refunds _________________________
+tests/test_app.py:127: in test_total_subtracts_refunds
+    assert service.total_valid_transactions() == 220.0
+E   assert 280.0 == 220.0
+E    +  where 280.0 = total_valid_transactions()
+E    +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7fbb48df6350>.total_valid_transactions
+_____________ test_find_duplicates_keeps_count_and_invalid_records _____________
+tests/test_bug_hunter_regressions.py:34: in test_find_duplicates_keeps_count_and_invalid_records
+    assert svc.count() == 5
+E   assert 2 == 5
+E    +  where 2 = count()
+E    +    where count = <transaction_service.TransactionService object at 0x7fbb48d9a7b0>.count
+________ test_find_duplicates_can_be_called_twice_with_the_same_result _________
+tests/test_bug_hunter_regressions.py:45: in test_find_duplicates_can_be_called_twice_with_the_same_result
+    assert first == second == [tx("A", 100.0)]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E     
+E     Left contains one more item: {'id': 'B', 'amount': 50.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+______ test_find_duplicates_spec_example_returns_third_and_fifth_records _______
+tests/test_bug_hunter_regressions.py:56: in test_find_duplicates_spec_example_returns_third_and_fifth_records
+    assert svc.find_duplicates() == [records[2], records[4]]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E     
+E     At index 0 diff: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 3.0, 'currency': 'USD', 'description': ''}
+E     Left contains one more item: {'id': 'C', 'amount': 4.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+_______________ test_find_duplicates_without_duplicates_is_empty _______________
+tests/test_bug_hunter_regressions.py:63: in test_find_duplicates_without_duplicates_is_empty
+    assert svc.find_duplicates() == []
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == []
+E     
+E     Left contains 3 more items, first extra item: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+_______________ test_find_duplicates_only_compares_valid_records _______________
+tests/test_bug_hunter_regressions.py:76: in test_find_duplicates_only_compares_valid_records
+    assert svc.find_duplicates() == []
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == []
+E     
+E     Left contains one more item: {'id': 'A', 'amount': 10.0, 'currency': 'USD', 'description': ''}
+E     Use -v to get more diff
+___________________________ test_total_spec_example ____________________________
+tests/test_bug_hunter_regressions.py:86: in test_total_spec_example
+    assert svc.total_valid_transactions() == 120.0
+E   assert 180.0 == 120.0
+E    +  where 180.0 = total_valid_transactions()
+E    +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7fbb48c2d310>.total_valid_transactions
+____________________ test_total_of_refunds_only_is_negative ____________________
+tests/test_bug_hunter_regressions.py:93: in test_total_of_refunds_only_is_negative
+    assert svc.total_valid_transactions() == -12.5
+E   assert 12.5 == -12.5
+E    +  where 12.5 = total_valid_transactions()
+E    +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7fbb48cd4890>.total_valid_transactions
+________________ test_average_with_only_invalid_records_is_zero ________________
+tests/test_bug_hunter_regressions.py:108: in test_average_with_only_invalid_records_is_zero
+    assert svc.average_transaction_value() == 0.0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:44: in average_transaction_value
+    return round_money(total / len(valid))
+                       ^^^^^^^^^^^^^^^^^^
+E   ZeroDivisionError: division by zero
+____________ test_get_transaction_non_integer_index_returns_none[1] ____________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not str
+___________ test_get_transaction_non_integer_index_returns_none[1.0] ___________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not float
+___________ test_get_transaction_non_integer_index_returns_none[1.5] ___________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not float
+__________ test_get_transaction_non_integer_index_returns_none[None] ___________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not NoneType
+_________ test_get_transaction_non_integer_index_returns_none[index4] __________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not list
+_________ test_get_transaction_non_integer_index_returns_none[index5] __________
+tests/test_bug_hunter_regressions.py:127: in test_get_transaction_non_integer_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: list indices must be integers or slices, not tuple
+____________ test_get_transaction_index_equal_to_count_returns_none ____________
+tests/test_bug_hunter_regressions.py:134: in test_get_transaction_index_equal_to_count_returns_none
+    assert svc.get_transaction(svc.count()) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+_______________ test_get_transaction_on_empty_store_returns_none _______________
+tests/test_bug_hunter_regressions.py:138: in test_get_transaction_on_empty_store_returns_none
+    assert TransactionService().get_transaction(0) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+__________ test_get_transaction_every_negative_index_returns_none[-1] __________
+tests/test_bug_hunter_regressions.py:146: in test_get_transaction_every_negative_index_returns_none
+    assert svc.get_transaction(index) is None
+E   AssertionError: assert {'id': 'B', 'amount': 2.0, 'currency': 'USD', 'description': ''} is None
+E    +  where {'id': 'B', 'amount': 2.0, 'currency': 'USD', 'description': ''} = get_transaction(-1)
+E    +    where get_transaction = <transaction_service.TransactionService object at 0x7fbb48cbd130>.get_transaction
+__________ test_get_transaction_every_negative_index_returns_none[-2] __________
+tests/test_bug_hunter_regressions.py:146: in test_get_transaction_every_negative_index_returns_none
+    assert svc.get_transaction(index) is None
+E   AssertionError: assert {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} is None
+E    +  where {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} = get_transaction(-2)
+E    +    where get_transaction = <transaction_service.TransactionService object at 0x7fbb48cbec10>.get_transaction
+__________ test_get_transaction_every_negative_index_returns_none[-3] __________
+tests/test_bug_hunter_regressions.py:146: in test_get_transaction_every_negative_index_returns_none
+    assert svc.get_transaction(index) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+__________ test_apply_discount_rejects_percent_outside_range[100.01] ___________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________ test_apply_discount_rejects_percent_outside_range[101] ____________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+___________ test_apply_discount_rejects_percent_outside_range[1000] ____________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+___________ test_apply_discount_rejects_percent_outside_range[-0.01] ___________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________ test_apply_discount_rejects_percent_outside_range[-1] _____________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________ test_apply_discount_rejects_percent_outside_range[inf] ____________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+___________ test_apply_discount_rejects_percent_outside_range[-inf] ____________
+tests/test_bug_hunter_regressions.py:165: in test_apply_discount_rejects_percent_outside_range
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+___________________ test_apply_discount_rejects_nan_percent ____________________
+tests/test_bug_hunter_regressions.py:171: in test_apply_discount_rejects_nan_percent
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[usd] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[Usd] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[uSD] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[123] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[U$D] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[US1] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[U D] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[   ] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+_ test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[\xc9\xc9\xc9] _
+tests/test_bug_hunter_regressions.py:189: in test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters
+    assert len(problems) == 1
+E   assert 0 == 1
+E    +  where 0 = len([])
+__________ test_lowercase_currency_record_is_left_out_of_calculations __________
+tests/test_bug_hunter_regressions.py:203: in test_lowercase_currency_record_is_left_out_of_calculations
+    assert svc.valid_transactions() == [tx("A", 100.0)]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E     
+E     Left contains one more item: {'id': 'B', 'amount': 50.0, 'currency': 'usd', 'description': ''}
+E     Use -v to get more diff
+_______________ test_add_transaction_rejects_lowercase_currency ________________
+tests/test_bug_hunter_regressions.py:209: in test_add_transaction_rejects_lowercase_currency
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_ test_validate_does_not_raise_for_an_integer_too_large_for_a_float[positive] __
+tests/test_bug_hunter_regressions.py:219: in test_validate_does_not_raise_for_an_integer_too_large_for_a_float
+    assert isinstance(validate_transaction(tx("A", amount)), list)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+utils.py:33: in validate_transaction
+    elif math.isnan(amount) or math.isinf(amount):
+         ^^^^^^^^^^^^^^^^^^
+E   OverflowError: int too large to convert to float
+_ test_validate_does_not_raise_for_an_integer_too_large_for_a_float[negative] __
+tests/test_bug_hunter_regressions.py:219: in test_validate_does_not_raise_for_an_integer_too_large_for_a_float
+    assert isinstance(validate_transaction(tx("A", amount)), list)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+utils.py:33: in validate_transaction
+    elif math.isnan(amount) or math.isinf(amount):
+         ^^^^^^^^^^^^^^^^^^
+E   OverflowError: int too large to convert to float
+_____ test_calculations_do_not_raise_for_an_integer_too_large_for_a_float ______
+tests/test_bug_hunter_regressions.py:226: in test_calculations_do_not_raise_for_an_integer_too_large_for_a_float
+    assert isinstance(svc.average_transaction_value(), float)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:42: in average_transaction_value
+    valid = self.valid_transactions()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:38: in valid_transactions
+    return [tx for tx in self._transactions if not validate_transaction(tx)]
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^
+utils.py:33: in validate_transaction
+    elif math.isnan(amount) or math.isinf(amount):
+         ^^^^^^^^^^^^^^^^^^
+E   OverflowError: int too large to convert to float
+______________________ test_cli_summary_with_sample_data _______________________
+tests/test_bug_hunter_regressions.py:237: in test_cli_summary_with_sample_data
+    assert [line.split()[-1] for line in lines] == ["6", "5", "501.25", "100.25", "1"]
+E   AssertionError: assert ['6', '5', '5...'100.25', '4'] == ['6', '5', '5...'100.25', '1']
+E     
+E     At index 2 diff: '541.25' != '501.25'
+E     Use -v to get more diff
+____________________________ test_cli_empty_summary ____________________________
+tests/test_bug_hunter_regressions.py:241: in test_cli_empty_summary
+    lines = run_cli(capsys, "--empty", "summary")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_bug_hunter_regressions.py:20: in run_cli
+    assert app.main(list(argv)) == 0
+           ^^^^^^^^^^^^^^^^^^^^
+app.py:104: in main
+    args.func(service, args)
+app.py:48: in cmd_summary
+    print(f"Average value:       {service.average_transaction_value():.2f}")
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:44: in average_transaction_value
+    return round_money(total / len(valid))
+                       ^^^^^^^^^^^^^^^^^^
+E   ZeroDivisionError: division by zero
+----------------------------- Captured stdout call -----------------------------
+Records stored:      0
+Valid transactions:  0
+Net total:           0.00
+____________ test_cli_duplicates_prints_the_second_txn_1002_record _____________
+tests/test_bug_hunter_regressions.py:249: in test_cli_duplicates_prints_the_second_txn_1002_record
+    assert len(lines) == 1
+E   AssertionError: assert 4 == 1
+E    +  where 4 = len(['TXN-1001       120.00 USD  Office chairs', 'TXN-1002        45.50 USD  Printer paper', 'TXN-1003       -20.00 USD  Refund: damaged paper', 'TXN-1004       310.25 USD  Conference ticket'])
+___________________ test_cli_show_99_reports_no_transaction ____________________
+tests/test_bug_hunter_regressions.py:254: in test_cli_show_99_reports_no_transaction
+    assert run_cli(capsys, "show", "99") == ["No transaction at position 99."]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_bug_hunter_regressions.py:20: in run_cli
+    assert app.main(list(argv)) == 0
+           ^^^^^^^^^^^^^^^^^^^^
+app.py:104: in main
+    args.func(service, args)
+app.py:62: in cmd_show
+    transaction = service.get_transaction(args.index)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transaction_service.py:59: in get_transaction
+    return self._transactions[index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+=========================== short test summary info ============================
+FAILED tests/test_app.py::test_average_of_empty_store_is_zero - ZeroDivisionE...
+FAILED tests/test_app.py::test_find_duplicates_returns_the_repeated_record - ...
+FAILED tests/test_app.py::test_find_duplicates_leaves_the_store_unchanged - A...
+FAILED tests/test_app.py::test_apply_discount_rejects_percent_above_100 - Fai...
+FAILED tests/test_app.py::test_apply_discount_rejects_negative_percent - Fail...
+FAILED tests/test_app.py::test_get_transaction_out_of_range_returns_none - In...
+FAILED tests/test_app.py::test_get_transaction_negative_index_returns_none - ...
+FAILED tests/test_app.py::test_total_subtracts_refunds - assert 280.0 == 220.0
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_keeps_count_and_invalid_records
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_can_be_called_twice_with_the_same_result
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_spec_example_returns_third_and_fifth_records
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_without_duplicates_is_empty
+FAILED tests/test_bug_hunter_regressions.py::test_find_duplicates_only_compares_valid_records
+FAILED tests/test_bug_hunter_regressions.py::test_total_spec_example - assert...
+FAILED tests/test_bug_hunter_regressions.py::test_total_of_refunds_only_is_negative
+FAILED tests/test_bug_hunter_regressions.py::test_average_with_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[1]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[1.0]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[1.5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[None]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[index4]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_non_integer_index_returns_none[index5]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_index_equal_to_count_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_on_empty_store_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_every_negative_index_returns_none[-1]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_every_negative_index_returns_none[-2]
+FAILED tests/test_bug_hunter_regressions.py::test_get_transaction_every_negative_index_returns_none[-3]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[101]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[1000]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[-1]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[inf]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_percent_outside_range[-inf]
+FAILED tests/test_bug_hunter_regressions.py::test_apply_discount_rejects_nan_percent
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[uSD]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[123]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[U$D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[US1]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[U D]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[   ]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[\xc9\xc9\xc9]
+FAILED tests/test_bug_hunter_regressions.py::test_lowercase_currency_record_is_left_out_of_calculations
+FAILED tests/test_bug_hunter_regressions.py::test_add_transaction_rejects_lowercase_currency
+FAILED tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_an_integer_too_large_for_a_float[positive]
+FAILED tests/test_bug_hunter_regressions.py::test_validate_does_not_raise_for_an_integer_too_large_for_a_float[negative]
+FAILED tests/test_bug_hunter_regressions.py::test_calculations_do_not_raise_for_an_integer_too_large_for_a_float
+FAILED tests/test_bug_hunter_regressions.py::test_cli_summary_with_sample_data
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary - ZeroDiv...
+FAILED tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_the_second_txn_1002_record
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_99_reports_no_transaction
+======================== 53 failed, 38 passed in 0.24s =========================

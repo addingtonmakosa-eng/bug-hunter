@@ -1,0 +1,148 @@
+FFFFF.F.FF.FFFFFFF.FFFF.FFFFFFFF........FF........FFFF..                 [100%]
+=================================== FAILURES ===================================
+E   assert 1 == 4
+     +  where 1 = count()
+     +    where count = <transaction_service.TransactionService object at 0x7efc71f7c830>.count
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:51: assert 1 == 4
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+      
+      At index 0 diff: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 3.0, 'currency': 'USD', 'description': ''}
+      Left contains one more item: {'id': 'B', 'amount': 2.0, 'currency': 'USD', 'description': ''}
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:59: AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+      
+      At index 0 diff: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 3.0, 'currency': 'USD', 'description': ''}
+      Left contains one more item: {'id': 'C', 'amount': 4.0, 'currency': 'USD', 'description': ''}
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:72: AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == []
+      
+      Left contains 3 more items, first extra item: {'id': 'A', 'amount': 1.0, 'currency': 'USD', 'description': ''}
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:76: AssertionError: assert [{'id': 'A', ...ription': ''}] == []
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+      
+      At index 0 diff: {'id': 'A', 'amount': 10.0, 'currency': 'USD', 'description': ''} != {'id': 'A', 'amount': 20.0, 'currency': 'USD', 'description': ''}
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:83: AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E   ZeroDivisionError: division by zero
+/home/claude/eval/run-b/demo-app/transaction_service.py:44: ZeroDivisionError: division by zero
+E   AssertionError: assert 180.0 == 120.0
+     +  where 180.0 = total_valid_transactions()
+     +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7efc720cf650>.total_valid_transactions
+     +      where <transaction_service.TransactionService object at 0x7efc720cf650> = loaded([{'id': 'A', 'amount': 100.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': -30.0, 'currency': 'USD', 'description': ''}, {'id': 'C', 'amount': 50.0, 'currency': 'USD', 'description': ''}])
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:111: AssertionError: assert 180.0 == 120.0
+E   AssertionError: assert 25.5 == -25.5
+     +  where 25.5 = total_valid_transactions()
+     +    where total_valid_transactions = <transaction_service.TransactionService object at 0x7efc720cf950>.total_valid_transactions
+     +      where <transaction_service.TransactionService object at 0x7efc720cf950> = loaded([{'id': 'A', 'amount': -20.0, 'currency': 'USD', 'description': ''}, {'id': 'B', 'amount': -5.5, 'currency': 'USD', 'description': ''}])
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:115: AssertionError: assert 25.5 == -25.5
+E   IndexError: list index out of range
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: IndexError: list index out of range
+E   IndexError: list index out of range
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: IndexError: list index out of range
+E   IndexError: list index out of range
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: IndexError: list index out of range
+E   TypeError: list indices must be integers or slices, not str
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: TypeError: list indices must be integers or slices, not str
+E   TypeError: list indices must be integers or slices, not float
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: TypeError: list indices must be integers or slices, not float
+E   TypeError: list indices must be integers or slices, not NoneType
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: TypeError: list indices must be integers or slices, not NoneType
+E   TypeError: list indices must be integers or slices, not list
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: TypeError: list indices must be integers or slices, not list
+E   Failed: DID NOT RAISE ValueError
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:160: Failed: DID NOT RAISE ValueError
+E   Failed: DID NOT RAISE ValueError
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:160: Failed: DID NOT RAISE ValueError
+E   Failed: DID NOT RAISE ValueError
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:160: Failed: DID NOT RAISE ValueError
+E   Failed: DID NOT RAISE ValueError
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:160: Failed: DID NOT RAISE ValueError
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'usd', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'Usd', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': '123', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'U$D', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'US ', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = len([])
+     +    where [] = validate_transaction({'id': 'A', 'amount': 10.0, 'currency': 'ÄÖÜ', 'description': ''})
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:178: AssertionError: assert 0 == 1
+E   AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+      
+      Left contains one more item: {'id': 'B', 'amount': 50.0, 'currency': 'usd', 'description': ''}
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:184: AssertionError: assert [{'id': 'A', ...ription': ''}] == [{'id': 'A', ...ription': ''}]
+E   Failed: DID NOT RAISE ValueError
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:190: Failed: DID NOT RAISE ValueError
+E   OverflowError: int too large to convert to float
+/home/claude/eval/run-b/demo-app/utils.py:33: OverflowError: int too large to convert to float
+E   OverflowError: int too large to convert to float
+/home/claude/eval/run-b/demo-app/utils.py:33: OverflowError: int too large to convert to float
+E   AssertionError: assert ['6', '5', '5...'100.25', '4'] == ['6', '5', '5...'100.25', '1']
+      
+      At index 2 diff: '541.25' != '501.25'
+      Use -v to get more diff
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:229: AssertionError: assert ['6', '5', '5...'100.25', '4'] == ['6', '5', '5...'100.25', '1']
+E   ZeroDivisionError: division by zero
+----------------------------- Captured stdout call -----------------------------
+Records stored:      0
+Valid transactions:  0
+Net total:           0.00
+/home/claude/eval/run-b/demo-app/transaction_service.py:44: ZeroDivisionError: division by zero
+E   AssertionError: assert 4 == 1
+     +  where 4 = len(['TXN-1001       120.00 USD  Office chairs', 'TXN-1002        45.50 USD  Printer paper', 'TXN-1003       -20.00 USD  Refund: damaged paper', 'TXN-1004       310.25 USD  Conference ticket'])
+/home/claude/eval/run-b/demo-app/tests/test_bug_hunter_regressions.py:239: AssertionError: assert 4 == 1
+E   IndexError: list index out of range
+/home/claude/eval/run-b/demo-app/transaction_service.py:59: IndexError: list index out of range
+=========================== short test summary info ============================
+FAILED tests/test_bug_hunter_regressions.py::test_bh001_find_duplicates_keeps_duplicate_and_invalid_records_in_the_store
+FAILED tests/test_bug_hunter_regressions.py::test_bh001_bh002_find_duplicates_can_be_called_twice_with_the_same_result
+FAILED tests/test_bug_hunter_regressions.py::test_bh002_find_duplicates_spec_example_returns_third_and_fifth_records
+FAILED tests/test_bug_hunter_regressions.py::test_bh002_find_duplicates_without_duplicates_is_empty
+FAILED tests/test_bug_hunter_regressions.py::test_bh002_find_duplicates_only_compares_valid_records
+FAILED tests/test_bug_hunter_regressions.py::test_bh003_average_with_only_invalid_records_is_zero
+FAILED tests/test_bug_hunter_regressions.py::test_bh004_total_spec_example - ...
+FAILED tests/test_bug_hunter_regressions.py::test_bh004_total_of_only_refunds_is_negative
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_index_equal_to_count_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_on_empty_store_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_negative_index_beyond_the_start_returns_none
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_non_integer_index_returns_none[1]
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_non_integer_index_returns_none[1.5]
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_non_integer_index_returns_none[None]
+FAILED tests/test_bug_hunter_regressions.py::test_bh005_get_transaction_non_integer_index_returns_none[index3]
+FAILED tests/test_bug_hunter_regressions.py::test_bh006_apply_discount_rejects_percent_outside_0_to_100[100.01]
+FAILED tests/test_bug_hunter_regressions.py::test_bh006_apply_discount_rejects_percent_outside_0_to_100[1000]
+FAILED tests/test_bug_hunter_regressions.py::test_bh006_apply_discount_rejects_percent_outside_0_to_100[-0.01]
+FAILED tests/test_bug_hunter_regressions.py::test_bh006_apply_discount_rejects_percent_outside_0_to_100[-100]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[usd]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[Usd]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[123]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[U$D]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[US ]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters[\xc4\xd6\xdc]
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_record_with_lowercase_currency_is_left_out_of_calculations
+FAILED tests/test_bug_hunter_regressions.py::test_bh007_add_transaction_rejects_lowercase_currency
+FAILED tests/test_bug_hunter_regressions.py::test_bh008_validate_does_not_raise_for_an_int_too_large_for_a_float[positive]
+FAILED tests/test_bug_hunter_regressions.py::test_bh008_validate_does_not_raise_for_an_int_too_large_for_a_float[negative]
+FAILED tests/test_bug_hunter_regressions.py::test_cli_summary_with_sample_data
+FAILED tests/test_bug_hunter_regressions.py::test_cli_empty_summary - ZeroDiv...
+FAILED tests/test_bug_hunter_regressions.py::test_cli_duplicates_prints_the_second_txn_1002_record_only
+FAILED tests/test_bug_hunter_regressions.py::test_cli_show_out_of_range_position
+33 failed, 23 passed in 0.06s

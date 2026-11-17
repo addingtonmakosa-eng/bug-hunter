@@ -1,0 +1,1 @@
+Find and fix the bugs in this repository. Verify your fixes, and write a report of what you found and what you changed to reports/bug-hunter-report.md.

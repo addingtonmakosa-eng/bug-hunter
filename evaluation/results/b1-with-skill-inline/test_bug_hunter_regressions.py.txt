@@ -1,0 +1,254 @@
+"""Reproduction and regression tests added by the Bug Hunter run.
+
+Every expected result comes from EXPECTED_BEHAVIOUR.md; the section is named
+above each group. Test names carry the defect id from
+reports/bug-registry.json (``bh001`` is BH-001). Tests named ``coverage``
+check rules that already held before the fixes and guard against a careless
+fix.
+"""
+
+import pytest
+
+from app import main
+from transaction_service import TransactionService
+from utils import apply_discount, is_valid_transaction, validate_transaction
+
+
+def tx(transaction_id, amount, currency="USD", description=""):
+    return {"id": transaction_id, "amount": amount, "currency": currency, "description": description}
+
+
+def loaded(records):
+    svc = TransactionService()
+    svc.load(records)
+    return svc
+
+
+def cli_output(capsys, *argv):
+    assert main(list(argv)) == 0
+    return capsys.readouterr().out
+
+
+def summary_values(output):
+    """The value printed after the colon on each summary line, in order."""
+    return [line.split(":", 1)[1].strip() for line in output.splitlines()]
+
+
+# --- BH-001: find_duplicates must not change the store ----------------------
+# Spec, find_duplicates(): "The stored records are not changed in any way.
+# count() and all_transactions() return the same results before and after
+# the call."
+
+
+def test_bh001_find_duplicates_keeps_duplicate_and_invalid_records_in_the_store():
+    records = [tx("A", 100.0), tx("", 25.0), tx("A", 100.0), tx("B", 0)]
+    svc = loaded(records)
+    count_before = svc.count()
+    all_before = svc.all_transactions()
+
+    svc.find_duplicates()
+
+    assert svc.count() == count_before == 4
+    assert svc.all_transactions() == all_before == records
+
+
+def test_bh001_bh002_find_duplicates_can_be_called_twice_with_the_same_result():
+    svc = loaded([tx("A", 1.0), tx("B", 2.0), tx("A", 3.0)])
+    first = svc.find_duplicates()
+    second = svc.find_duplicates()
+    assert first == second == [tx("A", 3.0)]
+    assert svc.count() == 3
+
+
+# --- BH-002: find_duplicates returns the repeated records -------------------
+# Spec, find_duplicates(): "every valid record whose id already appeared in
+# an earlier valid record. The first record with a given id is the original
+# and is not returned." Example: "ids A, B, A, C, A return the third and
+# fifth records." "With no duplicates it is an empty list."
+
+
+def test_bh002_find_duplicates_spec_example_returns_third_and_fifth_records():
+    records = [tx("A", 1.0), tx("B", 2.0), tx("A", 3.0), tx("C", 4.0), tx("A", 5.0)]
+    assert loaded(records).find_duplicates() == [records[2], records[4]]
+
+
+def test_bh002_find_duplicates_without_duplicates_is_empty():
+    assert loaded([tx("A", 1.0), tx("B", 2.0), tx("C", 3.0)]).find_duplicates() == []
+
+
+def test_bh002_find_duplicates_only_compares_valid_records():
+    # The first "A" has a zero amount, so it is invalid and cannot be the
+    # original. The two records with an empty id are invalid as well.
+    records = [tx("A", 0), tx("A", 10.0), tx("", 1.0), tx("A", 20.0), tx("", 2.0)]
+    assert loaded(records).find_duplicates() == [records[3]]
+
+
+def test_coverage_find_duplicates_on_empty_store_is_empty():
+    assert TransactionService().find_duplicates() == []
+
+
+# --- BH-003: average with no valid transactions ------------------------------
+# Spec, average_transaction_value(): "With no valid transactions (including
+# an empty store) it returns 0.0." "Refunds count as negative amounts."
+
+
+def test_bh003_average_with_only_invalid_records_is_zero():
+    assert loaded([tx("", 10.0), tx("A", 0)]).average_transaction_value() == 0.0
+
+
+def test_coverage_average_counts_refunds_as_negative_and_ignores_invalid_records():
+    svc = loaded([tx("A", 100.0), tx("", 500.0), tx("B", -30.0)])
+    assert svc.average_transaction_value() == 35.0
+
+
+# --- BH-004: net total uses signed amounts -----------------------------------
+# Spec, total_valid_transactions(): "the sum of their signed amounts. A
+# refund lowers the total." Example: "amounts 100.0, -30.0, 50.0 total
+# 120.0." "An empty store returns 0.0."
+
+
+def test_bh004_total_spec_example():
+    assert loaded([tx("A", 100.0), tx("B", -30.0), tx("C", 50.0)]).total_valid_transactions() == 120.0
+
+
+def test_bh004_total_of_only_refunds_is_negative():
+    assert loaded([tx("A", -20.0), tx("B", -5.5)]).total_valid_transactions() == -25.5
+
+
+def test_coverage_total_of_empty_store_is_zero():
+    assert TransactionService().total_valid_transactions() == 0.0
+
+
+# --- BH-005: get_transaction with an invalid index ---------------------------
+# Spec, get_transaction(index): "If index is not an integer, is negative, or
+# is greater than or equal to count(), it returns None." "Never raises."
+
+
+def test_bh005_get_transaction_index_equal_to_count_returns_none():
+    svc = loaded([tx("A", 1.0), tx("B", 2.0)])
+    assert svc.get_transaction(svc.count()) is None
+
+
+def test_bh005_get_transaction_on_empty_store_returns_none():
+    assert TransactionService().get_transaction(0) is None
+
+
+def test_bh005_get_transaction_negative_index_beyond_the_start_returns_none():
+    assert loaded([tx("A", 1.0), tx("B", 2.0)]).get_transaction(-5) is None
+
+
+@pytest.mark.parametrize("index", ["1", 1.5, None, [0]])
+def test_bh005_get_transaction_non_integer_index_returns_none(index):
+    assert loaded([tx("A", 1.0), tx("B", 2.0)]).get_transaction(index) is None
+
+
+def test_coverage_get_transaction_first_and_last_positions():
+    svc = loaded([tx("A", 1.0), tx("", 2.0), tx("C", 3.0)])
+    assert svc.get_transaction(0) == tx("A", 1.0)
+    assert svc.get_transaction(1) == tx("", 2.0)  # position among all records, valid or not
+    assert svc.get_transaction(2) == tx("C", 3.0)
+
+
+# --- BH-006: apply_discount range check --------------------------------------
+# Spec, apply_discount(): "percent must be between 0 and 100 inclusive. 0
+# returns the amount unchanged and 100 returns 0.0. A percent below 0 or
+# above 100 raises ValueError." Example: "apply_discount(80, 0) is 80.0."
+
+
+@pytest.mark.parametrize("percent", [100.01, 1000, -0.01, -100])
+def test_bh006_apply_discount_rejects_percent_outside_0_to_100(percent):
+    with pytest.raises(ValueError):
+        apply_discount(200, percent)
+
+
+def test_coverage_apply_discount_boundaries_are_allowed():
+    assert apply_discount(80, 0) == 80.0
+    assert apply_discount(200, 100) == 0.0
+
+
+# --- BH-007: currency must be three uppercase ASCII letters ------------------
+# Spec, data model: currency is "Exactly three uppercase ASCII letters, for
+# example USD." validate_transaction: "each rule that is broken adds one
+# problem."
+
+
+@pytest.mark.parametrize("currency", ["usd", "Usd", "123", "U$D", "US ", "ÄÖÜ"])
+def test_bh007_validate_rejects_currency_that_is_not_three_uppercase_ascii_letters(currency):
+    record = tx("A", 10.0, currency=currency)
+    assert len(validate_transaction(record)) == 1
+    assert not is_valid_transaction(record)
+
+
+def test_bh007_record_with_lowercase_currency_is_left_out_of_calculations():
+    svc = loaded([tx("A", 100.0), tx("B", 50.0, currency="usd")])
+    assert svc.valid_transactions() == [tx("A", 100.0)]
+    assert svc.total_valid_transactions() == 100.0
+
+
+def test_bh007_add_transaction_rejects_lowercase_currency():
+    svc = TransactionService()
+    with pytest.raises(ValueError):
+        svc.add_transaction(tx("A", 10.0, currency="usd"))
+    assert svc.count() == 0
+
+
+@pytest.mark.parametrize("currency", ["USD", "EUR", "GBP"])
+def test_coverage_validate_accepts_three_uppercase_ascii_letters(currency):
+    assert validate_transaction(tx("A", 10.0, currency=currency)) == []
+
+
+@pytest.mark.parametrize("currency", ["", "US", "USDX", None, 840])
+def test_coverage_validate_still_rejects_wrong_length_or_non_string_currency(currency):
+    assert len(validate_transaction(tx("A", 10.0, currency=currency))) == 1
+
+
+# --- BH-008: validate_transaction never raises -------------------------------
+# Spec, validate_transaction: "Never raises." Data model: amount is "int or
+# float, not bool. Finite and not zero." An int is always finite, so a
+# non-zero int breaks no rule.
+
+
+@pytest.mark.parametrize("amount", [10**400, -(10**400)], ids=["positive", "negative"])
+def test_bh008_validate_does_not_raise_for_an_int_too_large_for_a_float(amount):
+    assert validate_transaction(tx("A", amount)) == []
+
+
+@pytest.mark.parametrize("amount", [float("nan"), float("inf"), float("-inf"), True, 0, 0.0, "12.50", None])
+def test_coverage_validate_still_rejects_bad_amounts(amount):
+    assert len(validate_transaction(tx("A", amount))) == 1
+
+
+# --- app.py: the command table in the specification --------------------------
+# Spec, app.py table. These are symptoms of the service defects above
+# (summary: BH-002 and BH-004; --empty summary: BH-003; duplicates: BH-002;
+# show 99: BH-005), checked through the command line.
+
+
+def test_cli_summary_with_sample_data(capsys):
+    # "6 records, 5 valid, net total 501.25, average 100.25, 1 duplicate"
+    assert summary_values(cli_output(capsys, "summary")) == ["6", "5", "501.25", "100.25", "1"]
+
+
+def test_cli_empty_summary(capsys):
+    # "0 records, 0 valid, net total 0.00, average 0.00, 0 duplicates"
+    assert summary_values(cli_output(capsys, "--empty", "summary")) == ["0", "0", "0.00", "0.00", "0"]
+
+
+def test_cli_duplicates_prints_the_second_txn_1002_record_only(capsys):
+    lines = cli_output(capsys, "duplicates").splitlines()
+    assert len(lines) == 1
+    assert "TXN-1002" in lines[0]
+
+
+def test_cli_show_out_of_range_position(capsys):
+    assert cli_output(capsys, "show", "99").strip() == "No transaction at position 99."
+
+
+def test_coverage_cli_show_2_is_the_txn_1003_refund(capsys):
+    line = cli_output(capsys, "show", "2")
+    assert "TXN-1003" in line
+    assert "-20.00" in line
+
+
+def test_coverage_cli_discount(capsys):
+    assert cli_output(capsys, "discount", "200", "15").strip() == "170.00"

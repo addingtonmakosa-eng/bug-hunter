@@ -1,0 +1,71 @@
+=================== BH-001  21:54:16
+$ python3 -m pytest -q -k "find_duplicates or cli_summary_duplicate_count or cli_duplicates"
+..........                                                               [100%]
+10 passed, 95 deselected in 0.05s
+$ python3 -m pytest -q   (full suite)
+39 failed, 66 passed in 0.10s
+no newly failing tests
+=================== BH-002  21:54:30
+$ python3 -m pytest -q -k "total or cli_summary_net_total"
+........                                                                 [100%]
+8 passed, 97 deselected in 0.05s
+$ python3 -m pytest -q   (full suite)
+34 failed, 71 passed in 0.09s
+no newly failing tests
+=================== BH-003  21:54:31
+$ python3 -m pytest -q -k "average or cli_empty_summary"
+.....F...                                                                [100%]
+=================================== FAILURES ===================================
+E   OverflowError: int too large to convert to float
+/home/claude/eval/run-c/demo-app/utils.py:33: OverflowError: int too large to convert to float
+=========================== short test summary info ============================
+FAILED tests/test_bug_hunter_regressions.py::test_average_does_not_raise_for_int_too_large_for_float
+1 failed, 8 passed, 96 deselected in 0.08s
+$ python3 -m pytest -q   (full suite)
+31 failed, 74 passed in 0.09s
+no newly failing tests
+=================== BH-004  21:54:32
+$ python3 -m pytest -q -k "get_transaction or cli_show"
+...............                                                          [100%]
+15 passed, 90 deselected in 0.07s
+$ python3 -m pytest -q   (full suite)
+19 failed, 86 passed in 0.08s
+no newly failing tests
+=================== BH-003 re-verification 21:54:48
+The failed targeted run above selected tests with the keyword 'average', which also matched
+test_average_does_not_raise_for_int_too_large_for_float. That test belongs to BH-007 (not yet fixed).
+The BH-003 fix was not changed. Re-run with BH-003's own tests:
+$ python3 -m pytest -q -k "(average and not too_large) or cli_empty_summary"
+8 passed, 97 deselected in 0.05s
+=================== BH-005  21:55:04
+$ python3 -m pytest -q -k "apply_discount"
+..........                                                               [100%]
+10 passed, 95 deselected in 0.05s
+$ python3 -m pytest -q   (full suite)
+13 failed, 92 passed in 0.09s
+no newly failing tests
+=================== BH-006  21:55:05
+$ python3 -m pytest -q -k "currency"
+...................                                                      [100%]
+19 passed, 86 deselected in 0.05s
+$ python3 -m pytest -q   (full suite)
+3 failed, 102 passed in 0.09s
+no newly failing tests
+=================== BH-007  21:55:05
+$ python3 -m pytest -q -k "too_large or large_int or bad_amounts"
+..............                                                           [100%]
+14 passed, 91 deselected in 0.05s
+$ python3 -m pytest -q   (full suite)
+105 passed in 0.08s
+no newly failing tests
+=================== After the test-engineer fix review 21:59:12
+BH-004 attempt 2: dropped the bool clause (get_transaction(True) behaves as at baseline; the specification is silent).
+Added regression tests: test_find_duplicates_does_not_modify_record_contents, test_get_transaction_integer_valued_float_index_returns_none
+$ python3 -m pytest -q -k "get_transaction or cli_show or does_not_modify_record_contents"
+17 passed, 90 deselected in 0.06s
+$ python3 -m pytest -q   (full suite)
+107 passed in 0.08s
+Reviewer suspicion (BH-008), run as a one-off reproduction, not added to the suite:
+$ python3 -c "... loaded(10**308, 10**308, 1.0).average_transaction_value()"
+valid records: 3
+raised OverflowError: int too large to convert to float

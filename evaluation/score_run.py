@@ -72,7 +72,7 @@ KNOWN_STATUSES = {
 
 
 def run(cmd, cwd=None, env=None):
-    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
+    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, check=False)
 
 
 def junit_results(xml_path):

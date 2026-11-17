@@ -1,0 +1,116 @@
+{
+  "sandbox": "<sandbox>",
+  "repairs": {
+    "b1": true,
+    "b2": true,
+    "b3": true,
+    "b4": true,
+    "b5": true,
+    "s1": true
+  },
+  "benchmark_repaired": 5,
+  "stretch_repaired": true,
+  "hidden_test_groups": {
+    "b1": {
+      "passed": 3,
+      "failed": 0,
+      "failures": []
+    },
+    "b2": {
+      "passed": 4,
+      "failed": 0,
+      "failures": []
+    },
+    "b3": {
+      "passed": 9,
+      "failed": 0,
+      "failures": []
+    },
+    "b4": {
+      "passed": 10,
+      "failed": 0,
+      "failures": []
+    },
+    "b5": {
+      "passed": 3,
+      "failed": 0,
+      "failures": []
+    },
+    "s1": {
+      "passed": 6,
+      "failed": 0,
+      "failures": []
+    },
+    "regression": {
+      "passed": 10,
+      "failed": 0,
+      "failures": []
+    }
+  },
+  "held_out_regression": {
+    "passed": 10,
+    "failed": 0,
+    "failures": []
+  },
+  "own_test_suite": {
+    "exit_code": 0,
+    "summary": "107 passed in 0.08s"
+  },
+  "files_changed": [
+    [
+      "M",
+      "demo-app/transaction_service.py"
+    ],
+    [
+      "M",
+      "demo-app/utils.py"
+    ],
+    [
+      "A",
+      "demo-app/tests/test_bug_hunter_regressions.py"
+    ],
+    [
+      "A",
+      "reports/baseline-test-output.txt"
+    ],
+    [
+      "A",
+      "reports/bug-hunter-report.md"
+    ],
+    [
+      "A",
+      "reports/bug-registry.json"
+    ],
+    [
+      "A",
+      "reports/changes.diff"
+    ],
+    [
+      "A",
+      "reports/final-test-output.txt"
+    ],
+    [
+      "A",
+      "reports/reproduction-test-output.txt"
+    ],
+    [
+      "A",
+      "reports/verification-log.txt"
+    ]
+  ],
+  "unrelated_files_modified": [],
+  "report": {
+    "exists": true,
+    "missing_sections": []
+  },
+  "registry": {
+    "exists": true,
+    "valid_json": true,
+    "bug_count": 8,
+    "statuses": {
+      "Verification passed": 7,
+      "Unresolved": 1
+    },
+    "unknown_statuses": []
+  }
+}

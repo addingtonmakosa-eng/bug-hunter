@@ -16,14 +16,10 @@ import subprocess
 import sys
 
 import pytest
+from transaction_service import TransactionService
+from utils import apply_discount, is_valid_transaction, validate_transaction
 
-TARGET = os.path.abspath(os.environ.get("BUG_HUNTER_TARGET", ""))
-if not os.path.isfile(os.path.join(TARGET, "transaction_service.py")):
-    raise RuntimeError("Set BUG_HUNTER_TARGET to a demo-app directory")
-sys.path.insert(0, TARGET)
-
-from transaction_service import TransactionService  # noqa: E402
-from utils import apply_discount, is_valid_transaction, validate_transaction  # noqa: E402
+TARGET = os.path.abspath(os.environ["BUG_HUNTER_TARGET"])  # checked in conftest.py
 
 
 def tx(transaction_id, amount, currency="USD"):
@@ -38,7 +34,7 @@ def loaded(*records):
 
 def run_cli(*args):
     return subprocess.run(
-        [sys.executable, "app.py", *args], cwd=TARGET, capture_output=True, text=True, timeout=30
+        [sys.executable, "app.py", *args], cwd=TARGET, capture_output=True, text=True, timeout=30, check=False
     )
 
 
