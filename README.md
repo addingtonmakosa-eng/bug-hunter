@@ -116,7 +116,7 @@ Git, and for the demo Python 3.9+ with pytest.
 skill, subagents and hook under `.claude/` are picked up automatically.
 
 ```bash
-git clone <this repository> bug-hunter && cd bug-hunter
+git clone https://github.com/addingtonmakosa-eng/bug-hunter.git && cd bug-hunter
 python3 -m pip install -r demo-app/requirements.txt   # pytest, for the demo
 bash evaluation/check_discovery.sh                    # six "ok" lines expected
 ```
