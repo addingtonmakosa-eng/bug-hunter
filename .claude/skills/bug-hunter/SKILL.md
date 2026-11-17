@@ -84,6 +84,30 @@ strings exactly.
   then review). Add one more scout run only if the first clearly missed a
   directory.
 
+## Delegating to the specialists
+
+`bug-scout` and `test-engineer` are project subagents defined in
+`.claude/agents/`. Start them with the Agent tool (named Task before Claude
+Code 2.1.63, and still listed under that name in some output). Each
+delegation is a real tool call; what you record must match what happened:
+
+1. **The named subagent starts.** Record `"delegated"`.
+2. **The named subagent type is not found, but you can start a general
+   subagent.** Start one, tell it to read the matching file in
+   `.claude/agents/` and follow it as its role, and tell it to use only
+   file-reading and search tools. Its read-only limit is then an instruction,
+   not something Claude Code enforces, so run `git status --short` when it
+   returns and confirm it changed nothing. Record
+   `"delegated with a fallback: <reason>"`. Tell the user that agent files
+   added after a session started may need Claude Code to be restarted.
+3. **You cannot start any subagent.** Say so plainly, do that specialist's
+   work yourself by following its file in `.claude/agents/`, and record
+   `"performed inline: <reason>"`. An inline review is not independent; say
+   that in the report.
+
+Never describe a delegation that did not happen. Wait for a specialist's
+result before using it; do not predict what it will say.
+
 ## Progress output
 
 At the end of each phase print one short block so the user can follow along:
@@ -121,10 +145,10 @@ assessment. Do not run the tests yet.
 
 ## Phase 2: Bug discovery
 
-1. Delegate to the **`bug-scout`** subagent with the Agent tool (called Task
-   in older Claude Code versions). Give it: the target path, languages, the
-   test command, where the expected-behaviour sources are, and any focus
-   notes. Ask for its structured findings format.
+1. Delegate to the **`bug-scout`** subagent (see "Delegating to the
+   specialists"). Give it: the target path, languages, the test command,
+   where the expected-behaviour sources are, and any focus notes. Ask for its
+   structured findings format.
 2. While it works or after it returns, read the important findings' code
    yourself. Do not copy a finding into the registry without opening the file
    it cites.
@@ -139,12 +163,6 @@ assessment. Do not run the tests yet.
    - **Low**: minor or rare edge case with limited impact.
 5. Keep speculative items (style, hypothetical risks, "could be cleaner") out
    of the defect list. Record them as `observations` in the registry.
-
-If the `bug-scout` subagent is not available, say so plainly, record
-`"bug-scout": "performed inline: <reason>"` under `delegation` in the
-registry, and do the investigation yourself following
-`.claude/agents/bug-scout.md` if it exists. Never report a delegation that
-did not happen.
 
 ## Phase 3: Reproduction
 

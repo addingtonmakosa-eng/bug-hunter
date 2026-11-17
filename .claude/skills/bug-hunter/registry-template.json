@@ -11,8 +11,8 @@
   },
   "preexisting_uncommitted_files": [],
   "delegation": {
-    "bug-scout": "delegated | performed inline: <reason>",
-    "test-engineer": "delegated | performed inline: <reason>"
+    "bug-scout": "delegated | delegated with a fallback: <reason> | performed inline: <reason>",
+    "test-engineer": "delegated | delegated with a fallback: <reason> | performed inline: <reason>"
   },
   "baseline": { "command": "", "passed": 0, "failed": 0, "errors": 0, "output_file": "reports/baseline-test-output.txt" },
   "final": { "command": "", "passed": 0, "failed": 0, "errors": 0, "output_file": "reports/final-test-output.txt" },
